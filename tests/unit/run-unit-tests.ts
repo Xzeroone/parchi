@@ -24,6 +24,7 @@ import { runModelListingSuite } from './suites/model-listing.test.js';
 import { runModelMessageConvertSuite } from './suites/model-message-convert.test.js';
 import { runOauthCandidatesSuite } from './suites/oauth-candidates.test.js';
 import { runOauthModelNormalizationSuite } from './suites/oauth-model-normalization.test.js';
+import { runOauthProfileContextSyncSuite } from './suites/oauth-profile-context-sync.test.js';
 import { runOrchestratorNormalizationSuite } from './suites/orchestrator-normalization.test.js';
 import { runPanelSessionMemorySuite } from './suites/panel-session-memory.test.js';
 import { runPlanNormalizationSuite } from './suites/plan-normalization.test.js';
@@ -68,6 +69,7 @@ export function runUnitTests() {
   runErrorHandlingSuite(runner);
   runApiErrorClassificationSuite(runner);
   runOauthModelNormalizationSuite(runner);
+  runOauthProfileContextSyncSuite(runner);
   runOauthCandidatesSuite(runner);
   runRuntimeProfileRoutingSuite(runner);
   runCodexOauthConfigSuite(runner);
