@@ -13,8 +13,7 @@
     "debugger",
     "identity",
     "storage",
-    "declarativeNetRequest",
-    "userScripts"
+    "declarativeNetRequest"
   ],
   "host_permissions": [
     "<all_urls>",

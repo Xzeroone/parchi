@@ -60,12 +60,14 @@ export const READ_TOOLS = [
   },
   {
     name: 'getContent',
-    description: 'Extract page content.',
+    description:
+      'Extract page content. Result is truncated to maxChars (default 8000) with a `truncated` flag — raise maxChars if you need the full content.',
     input_schema: {
       type: 'object',
       properties: {
         type: { type: 'string', description: 'text, html, title, url, or links.' },
         selector: { type: 'string', description: 'Optional selector to scope.' },
+        maxChars: { type: 'number', description: 'Maximum characters to return before truncating. Defaults to 8000.' },
         tabId: { type: 'number', description: 'Optional tab id.' },
       },
     },

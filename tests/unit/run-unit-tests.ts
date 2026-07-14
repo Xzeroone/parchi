@@ -10,6 +10,8 @@ import { runCompactionStressTestV2Suite } from './compaction-stress-test-v2.test
 import { TestRunner, log } from './shared/runner.js';
 import { runAiProviderConfigSuite } from './suites/ai-provider-config.test.js';
 import { runApiErrorClassificationSuite } from './suites/api-error-classification.test.js';
+import { runBrowserDebugFirefoxGuardSuite } from './suites/browser-debug-firefox-guard.test.js';
+import { runBrowserEvalSerializationSuite } from './suites/browser-eval-serialization.test.js';
 import { runCodexOauthConfigSuite } from './suites/codex-oauth-config.test.js';
 import { runConversationCompactionSuite } from './suites/conversation-compaction.test.js';
 import { runErrorHandlingSuite } from './suites/error-handling.test.js';
@@ -63,6 +65,8 @@ export function runUnitTests() {
   const runner = new TestRunner();
 
   runToolDefinitionsSuite(runner);
+  runBrowserEvalSerializationSuite(runner);
+  runBrowserDebugFirefoxGuardSuite(runner);
   runAiProviderConfigSuite(runner);
   runToolSchemaConversionSuite(runner);
   runInputValidationSuite(runner);

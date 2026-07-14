@@ -30,7 +30,6 @@ const TOOL_PERMISSION_CATEGORIES: Record<BrowserToolName, ToolPermissionCategory
   closeTab: 'tabs',
   switchTab: 'tabs',
   groupTabs: 'tabs',
-  focusTab: 'tabs',
   describeSessionTabs: 'tabs',
 };
 

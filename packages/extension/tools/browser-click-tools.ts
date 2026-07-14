@@ -7,6 +7,7 @@ import {
   resolveWaitTimeoutMs,
 } from './browser-tool-shared.js';
 import { injectedClick } from './injected/click.js';
+import { dispatchSyntheticClick, resolveSelectorSpecElement } from './injected/shared.js';
 import { parseSelectorSpec } from './selector-spec.js';
 
 export async function clickTool(ctx: BrowserToolsDelegate, args: BrowserToolArgs) {
@@ -30,9 +31,21 @@ export async function clickTool(ctx: BrowserToolsDelegate, args: BrowserToolArgs
 
   const spec = parseSelectorSpec(rawSelector);
 
-  let result = await ctx.runInTab(tabId, injectedClick, [spec, timeoutMs] as const);
+  const dispatchSyntheticClickSrc = dispatchSyntheticClick.toString();
+  const resolveSelectorSpecElementSrc = resolveSelectorSpecElement.toString();
+  let result = await ctx.runInTab(tabId, injectedClick, [
+    spec,
+    timeoutMs,
+    dispatchSyntheticClickSrc,
+    resolveSelectorSpecElementSrc,
+  ] as const);
   if (isToolFailure(result) && result.error === 'Element not found.') {
-    result = await ctx.runInAllFrames(tabId, injectedClick, [spec, timeoutMs] as const);
+    result = await ctx.runInAllFrames(tabId, injectedClick, [
+      spec,
+      timeoutMs,
+      dispatchSyntheticClickSrc,
+      resolveSelectorSpecElementSrc,
+    ] as const);
   }
 
   if (timeout.wasClamped && result && typeof result === 'object') {
@@ -66,7 +79,21 @@ export async function clickAtTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
     durationMs: 1500,
   });
 
-  const clickAtScript = (cx: number, cy: number, btn: string, dblClick: boolean) => {
+  const clickAtScript = (cx: number, cy: number, btn: string, dblClick: boolean, dispatchSyntheticClickSrc: string) => {
+    const dispatchSyntheticClick = new Function(`return (${dispatchSyntheticClickSrc});`)() as (
+      target: Element,
+      clientX: number,
+      clientY: number,
+      options?: { button?: 0 | 1 | 2; doubleClick?: boolean; contextMenu?: boolean },
+    ) => void;
+
+    if (cx < 0 || cy < 0 || cx > window.innerWidth || cy > window.innerHeight) {
+      return {
+        success: false,
+        error: `Coordinates (${cx}, ${cy}) are outside the visible viewport (${window.innerWidth}x${window.innerHeight}). Coordinates must be CSS/viewport pixels, not device pixels.`,
+      };
+    }
+
     const buttonCode = btn === 'right' ? 2 : btn === 'middle' ? 1 : 0;
     const el = document.elementFromPoint(cx, cy) as HTMLElement | null;
 
@@ -74,68 +101,17 @@ export async function clickAtTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
     const id = el?.id || null;
     const text = el?.textContent?.trim().slice(0, 80) || null;
 
-    const firePointer = (type: string, target: EventTarget) => {
-      try {
-        target.dispatchEvent(
-          new PointerEvent(type, {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-            clientX: cx,
-            clientY: cy,
-            button: buttonCode,
-            pointerId: 1,
-            pointerType: 'mouse',
-            isPrimary: true,
-          }),
-        );
-      } catch {}
-    };
-
-    const fireMouse = (type: string, target: EventTarget) => {
-      target.dispatchEvent(
-        new MouseEvent(type, {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          clientX: cx,
-          clientY: cy,
-          button: buttonCode,
-        }),
-      );
-    };
-
-    const target: EventTarget = el || document.documentElement;
+    const target: Element = el || document.documentElement;
 
     if (el && typeof el.focus === 'function') {
       el.focus();
     }
 
-    firePointer('pointerover', target);
-    fireMouse('mouseover', target);
-    firePointer('pointerdown', target);
-    fireMouse('mousedown', target);
-    firePointer('pointerup', target);
-    fireMouse('mouseup', target);
-    fireMouse('click', target);
-
-    if (dblClick) {
-      firePointer('pointerdown', target);
-      fireMouse('mousedown', target);
-      firePointer('pointerup', target);
-      fireMouse('mouseup', target);
-      fireMouse('click', target);
-      fireMouse('dblclick', target);
-    }
-
-    if (btn === 'right') {
-      fireMouse('contextmenu', target);
-    }
-
-    const clickableElement = el as (HTMLElement & { click?: () => void }) | null;
-    if (clickableElement && typeof clickableElement.click === 'function' && btn === 'left') {
-      clickableElement.click();
-    }
+    dispatchSyntheticClick(target, cx, cy, {
+      button: buttonCode as 0 | 1 | 2,
+      doubleClick: dblClick,
+      contextMenu: btn === 'right',
+    });
 
     return {
       success: true,
@@ -154,6 +130,12 @@ export async function clickAtTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
     };
   };
 
-  const result = await ctx.runInTab(tabId, clickAtScript, [x, y, button, doubleClick] as const);
+  const result = await ctx.runInTab(tabId, clickAtScript, [
+    x,
+    y,
+    button,
+    doubleClick,
+    dispatchSyntheticClick.toString(),
+  ] as const);
   return result || { success: false, error: 'Script execution failed.' };
 }
