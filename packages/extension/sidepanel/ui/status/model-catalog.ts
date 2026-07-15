@@ -1,6 +1,6 @@
 // Model catalog - refresh and suggestion management
 
-import { fetchProviderModels, getAllProviderStates } from '../../../oauth/manager.js';
+import { fetchProviderModelsDetailed, getAllProviderStates } from '../../../oauth/manager.js';
 import type { OAuthProviderKey } from '../../../oauth/types.js';
 import { materializeProfileWithProvider } from '../../../state/provider-registry.js';
 import { SidePanelUI } from '../core/panel-ui.js';
@@ -105,7 +105,7 @@ sidePanelProto.refreshModelCatalog = async function refreshModelCatalog({ force 
         .filter(([, state]) => state?.connected && state?.tokens?.accessToken)
         .map(async ([key]) => {
           const providerKey = `${key}-oauth`;
-          const models = await fetchProviderModels(key as OAuthProviderKey);
+          const { models } = await fetchProviderModelsDetailed(key as OAuthProviderKey);
           return { providerKey, models };
         });
       const oauthResults = await Promise.all(oauthFetches);

@@ -20,6 +20,7 @@ import {
   fetchAnthropicModels,
   fetchCodexModels,
   fetchCopilotModels,
+  fetchOpenAICompatibleModelEntries,
   fetchOpenAICompatibleModels,
   fetchOpenAIModels,
   getStaticOAuthModelIds,
@@ -168,12 +169,28 @@ export async function getApiBaseUrl(key: OAuthProviderKey): Promise<string | nul
  * Returns model IDs, or falls back to static list on failure.
  */
 export async function fetchProviderModels(key: OAuthProviderKey): Promise<string[]> {
+  const result = await fetchProviderModelsDetailed(key);
+  return result.models;
+}
+
+export interface OAuthFetchResult {
+  /** Model IDs discovered (or static fallback on failure). */
+  models: string[];
+  /** True when the models came from a live API response. */
+  live: boolean;
+}
+
+/**
+ * Detailed variant that reports whether the returned models are live or the
+ * static fallback. Callers that want live-first merging should use this.
+ */
+export async function fetchProviderModelsDetailed(key: OAuthProviderKey): Promise<OAuthFetchResult> {
   const config = OAUTH_PROVIDERS[key];
-  if (!config) return [];
+  if (!config) return { models: [], live: false };
 
   const accessToken = await getAccessToken(key);
   const staticModels = normalizeOAuthModelIdsForProvider(key, getStaticOAuthModelIds(config));
-  if (!accessToken) return staticModels;
+  if (!accessToken) return { models: staticModels, live: false };
 
   try {
     let models: string[] = [];
@@ -208,18 +225,28 @@ export async function fetchProviderModels(key: OAuthProviderKey): Promise<string
       if (apiBase) {
         models = await fetchOpenAICompatibleModels(accessToken, apiBase);
       }
+    } else if (key === 'xai') {
+      const apiBase = config.apiBaseUrl;
+      if (apiBase) {
+        const entries = await fetchOpenAICompatibleModelEntries(accessToken, apiBase);
+        if (entries.length > 0) {
+          models = entries.map((e) => e.id);
+        } else {
+          models = await fetchOpenAICompatibleModels(accessToken, apiBase);
+        }
+      }
     }
 
     const discoveredModels = normalizeOAuthModelIdsForProvider(key, models);
     if (discoveredModels.length > 0) {
       const prioritizedModels = prioritizeOAuthModelCandidates(key, discoveredModels, staticModels);
       if (prioritizedModels.length > 0) {
-        return prioritizedModels;
+        return { models: prioritizedModels, live: true };
       }
     }
-    return staticModels;
+    return { models: staticModels, live: false };
   } catch (err) {
     console.warn(`[OAuth] Failed to fetch models for ${key}:`, err);
-    return staticModels;
+    return { models: staticModels, live: false };
   }
 }

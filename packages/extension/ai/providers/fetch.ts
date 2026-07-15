@@ -2,19 +2,38 @@
 import { extractModelEntries, fetchWithTimeout } from './model-listing.js';
 import type { ModelEntry, ProviderCredentials, ProviderDefinition } from './types.js';
 
+export interface FetchedModelsResult {
+  /** Discovered model entries (empty when listing failed). */
+  models: ModelEntry[];
+  /** True when the models came from a live API response; false when they are
+   * the static fallback list (listing unsupported, no credentials, or fetch
+   * error/timeout). Callers can use this to decide live-first merging. */
+  live: boolean;
+}
+
 export async function fetchModelsForProvider(
   def: ProviderDefinition,
   credentials: ProviderCredentials,
 ): Promise<ModelEntry[]> {
+  const result = await fetchModelsForProviderDetailed(def, credentials);
+  return result.models;
+}
+
+export async function fetchModelsForProviderDetailed(
+  def: ProviderDefinition,
+  credentials: ProviderCredentials,
+): Promise<FetchedModelsResult> {
+  const staticFallback = def.models || [];
+
   if (!def.supportsModelListing) {
-    return def.models || [];
+    return { models: staticFallback, live: false };
   }
 
   const apiKey = credentials.oauthAccessToken || credentials.apiKey || '';
-  if (!apiKey) return def.models || [];
+  if (!apiKey) return { models: staticFallback, live: false };
 
   const baseURL = (credentials.customEndpoint || def.defaultBaseUrl).replace(/\/+$/, '');
-  if (!baseURL) return def.models || [];
+  if (!baseURL) return { models: staticFallback, live: false };
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -42,13 +61,13 @@ export async function fetchModelsForProvider(
     });
     if (!response.ok) {
       console.warn(`[provider-registry] ${def.key} model fetch returned ${response.status}`);
-      return def.models || [];
+      return { models: staticFallback, live: false };
     }
     const data = await response.json();
-    const models = extractModelEntries(data);
-    return models.length > 0 ? models : def.models || [];
+    const models = extractModelEntries(data, def.key);
+    return models.length > 0 ? { models, live: true } : { models: staticFallback, live: false };
   } catch (err) {
     console.warn(`[provider-registry] Failed to fetch models for ${def.key}:`, err);
-    return def.models || [];
+    return { models: staticFallback, live: false };
   }
 }

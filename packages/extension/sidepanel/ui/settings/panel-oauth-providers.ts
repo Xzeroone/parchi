@@ -5,7 +5,7 @@ import {
   cancelConnection,
   connectProvider,
   disconnect,
-  fetchProviderModels,
+  fetchProviderModelsDetailed,
   getAllProviderStates,
 } from '../../../oauth/manager.js';
 import { normalizeOAuthModelIdForProvider } from '../../../oauth/model-normalization.js';
@@ -37,7 +37,7 @@ sidePanelProto.renderOAuthProviderGrid = async function renderOAuthProviderGrid(
   if (connectedKeys.length > 0) {
     const results = await Promise.all(
       connectedKeys.map(async (key) => {
-        const models = await fetchProviderModels(key);
+        const { models } = await fetchProviderModelsDetailed(key);
         return { key, models };
       }),
     );
@@ -181,6 +181,9 @@ sidePanelProto.startOAuthConnect = async function startOAuthConnect(key: OAuthPr
     setHidden(document.getElementById('oauthDeviceCodePrompt'), true);
     this.updateStatus(`${config.name} connected`, 'success');
     await syncOAuthProfiles(this);
+    // Force-refresh the model catalog so newly-connected provider models
+    // appear immediately, rather than waiting for the TTL to expire.
+    void this.refreshModelCatalog?.({ force: true });
     this.renderOAuthProviderGrid();
   } catch (error) {
     setHidden(document.getElementById('oauthDeviceCodePrompt'), true);
@@ -197,6 +200,8 @@ sidePanelProto.startOAuthDisconnect = async function startOAuthDisconnect(key: O
   await disconnect(key);
   this.updateStatus(`${config?.name || key} disconnected`, 'success');
   await syncOAuthProfiles(this);
+  // Force-refresh so the disconnected provider's stale models don't linger.
+  void this.refreshModelCatalog?.({ force: true });
   this.renderOAuthProviderGrid();
 };
 

@@ -56,6 +56,9 @@ async function pollForTokens(
 ): Promise<OAuthTokenSet> {
   const intervalMs = (deviceCode.interval || 5) * 1000;
   const deadline = Date.now() + Math.min(deviceCode.expires_in * 1000, POLL_TIMEOUT_MS);
+  // Per-request timeout: some providers (e.g. Qwen) long-poll the token
+  // endpoint. We abort the fetch after 30s to avoid hanging indefinitely.
+  const REQUEST_TIMEOUT_MS = 30_000;
 
   while (Date.now() < deadline) {
     if (signal?.aborted) throw new Error('OAuth flow was cancelled.');
@@ -73,16 +76,68 @@ async function pollForTokens(
       params.code_verifier = deviceCode.code_verifier;
     }
 
-    const response = await fetch(config.tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Accept: 'application/json',
-      },
-      body: new URLSearchParams(params).toString(),
-    });
+    // Combine the caller's abort signal with a per-request timeout so we
+    // don't hang on providers that long-poll.
+    const timeoutController = new AbortController();
+    const timer = setTimeout(() => timeoutController.abort(), REQUEST_TIMEOUT_MS);
+    // Bridge the caller's signal to the timeout controller.
+    const callerAbortListener = () => timeoutController.abort();
+    if (signal) {
+      if (signal.aborted) timeoutController.abort();
+      else signal.addEventListener('abort', callerAbortListener, { once: true });
+    }
 
-    const data = await response.json();
+    let response: Response;
+    try {
+      response = await fetch(config.tokenUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body: new URLSearchParams(params).toString(),
+        signal: timeoutController.signal,
+      });
+    } catch {
+      clearTimeout(timer);
+      if (signal) signal.removeEventListener('abort', callerAbortListener);
+      // If the caller aborted, propagate. Otherwise treat as transient
+      // (timeout, network blip) and retry on the next interval.
+      if (signal?.aborted) throw new Error('OAuth flow was cancelled.');
+      continue;
+    }
+    clearTimeout(timer);
+    if (signal) signal.removeEventListener('abort', callerAbortListener);
+
+    // Some providers (e.g. Qwen) long-poll the token endpoint and their
+    // gateway returns 502/504 with an HTML body when it times out before
+    // the user authorises. Treat these as "authorization_pending" and
+    // retry on the next interval rather than crashing on response.json().
+    if (!response.ok) {
+      if (response.status === 502 || response.status === 504) {
+        continue;
+      }
+      const text = await response.text().catch(() => '');
+      throw new Error(`Token request failed (${response.status}): ${text}`);
+    }
+
+    // Guard against non-JSON responses (some gateways return HTML on errors).
+    const rawBody = await response.text();
+    let data: {
+      error?: string;
+      error_description?: string;
+      access_token?: string;
+      refresh_token?: string;
+      expires_in?: number;
+      token_type?: string;
+      resource_url?: string;
+    };
+    try {
+      data = JSON.parse(rawBody) as typeof data;
+    } catch {
+      // Non-JSON response — treat as transient and retry.
+      continue;
+    }
 
     // GitHub returns 200 for both success and error in device flow
     if (data.error) {
@@ -97,13 +152,14 @@ async function pollForTokens(
     }
 
     if (data.access_token) {
+      const expiresIn = typeof data.expires_in === 'number' ? data.expires_in : Number(data.expires_in) || 0;
       return {
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
-        expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
+        expiresAt: expiresIn ? Date.now() + expiresIn * 1000 : undefined,
         tokenType: data.token_type || 'Bearer',
         resourceUrl: data.resource_url,
-        raw: data,
+        raw: data as Record<string, unknown>,
       };
     }
   }
@@ -221,13 +277,20 @@ export async function refreshQwenToken(config: OAuthProviderConfig, refreshToken
     throw new Error(`Qwen token refresh failed (${response.status}): ${text}`);
   }
 
-  const data = await response.json();
+  const data: {
+    access_token?: string;
+    refresh_token?: string;
+    expires_in?: number;
+    token_type?: string;
+    resource_url?: string;
+  } = await response.json();
+  const expiresIn = typeof data.expires_in === 'number' ? data.expires_in : Number(data.expires_in) || 0;
   return {
-    accessToken: data.access_token,
+    accessToken: String(data.access_token || ''),
     refreshToken: data.refresh_token || refreshToken,
-    expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
+    expiresAt: expiresIn ? Date.now() + expiresIn * 1000 : undefined,
     tokenType: data.token_type || 'Bearer',
     resourceUrl: data.resource_url,
-    raw: data,
+    raw: data as Record<string, unknown>,
   };
 }

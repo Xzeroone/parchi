@@ -49,6 +49,9 @@ sidePanelProto.openSettingsPanel = function openSettingsPanel() {
   this.openSidebar();
   this.showRightPanel('settings');
   this.switchSettingsTab(this.currentSettingsTab || 'providers');
+  // Force-refresh the model catalog when the user opens settings so stale
+  // TTL-cached entries are replaced with live data from connected providers.
+  void this.refreshModelCatalog?.({ force: true });
   void this.refreshAccountPanel?.({ silent: true });
 };
 
