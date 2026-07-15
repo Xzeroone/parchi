@@ -156,6 +156,10 @@
   border-bottom: 1px solid var(--ink-1);
   transition: background var(--duration-fast) ease;
   cursor: default;
+  min-width: 0;
+  max-width: 100%;
+  /* Clip paint so flex children never overlay logo/name at narrow widths */
+  overflow: hidden;
 }
 
 .provider-row:last-child {
@@ -206,6 +210,9 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .provider-meta {
@@ -213,6 +220,29 @@
   color: var(--muted-dim);
   margin-top: 1px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * Connected Connect-tab row packs logo + name + model select + status + Disconnect.
+ * At sidepanel widths the name/"Grok" label collides with the select (logo overlay).
+ * Prefer: logo | model select (flex) | status | Disconnect — name/meta via title.
+ */
+.provider-row:has(select.oauth-model-select) {
+  gap: 6px;
+}
+
+.provider-row:has(select.oauth-model-select) .provider-info {
+  display: none;
+}
+
+.provider-row select.oauth-model-select {
+  /* flex-basis 0 beats native <select> min-content so the row never overlays */
+  flex: 1 1 0;
+  min-width: 72px;
+  width: 0;
+  max-width: none;
   overflow: hidden;
   text-overflow: ellipsis;
 }

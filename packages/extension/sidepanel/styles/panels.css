@@ -1499,7 +1499,7 @@ input[type="range"]::-webkit-slider-thumb {
   line-height: 1.5;
 }
 
-/* Provider row select inline */
+/* Provider row select inline — shares flex space; see shared.css for shrink rules */
 .provider-row select.oauth-model-select {
   font-size: 11px;
   padding: 3px 6px;
@@ -1507,7 +1507,6 @@ input[type="range"]::-webkit-slider-thumb {
   border: 1px solid var(--ink-1);
   border-radius: var(--radius-sm);
   color: var(--foreground);
-  max-width: 160px;
 }
 
 @media (max-width: 820px) {

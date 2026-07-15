@@ -74,15 +74,17 @@ sidePanelProto.renderOAuthProviderGrid = async function renderOAuthProviderGrid(
         })
         .join('');
       metaHtml = email ? `Connected · ${email}` : 'Connected';
-      const selectHtml = `<select class="oauth-model-select" data-provider="${config.key}">${modelOptions}</select>`;
+      // Narrow sidepanel hides .provider-info (logo + select + Disconnect only); keep identity in title.
+      row.title = email ? `${config.name} · ${email}` : `${config.name} · Connected`;
+      const selectHtml = `<select class="oauth-model-select" data-provider="${config.key}" aria-label="${config.name} model">${modelOptions}</select>`;
       row.innerHTML = `
-        <span class="provider-logo">${svg}</span>
+        <span class="provider-logo" aria-hidden="true">${svg}</span>
         <div class="provider-info">
           <div class="provider-name">${config.name}</div>
           <div class="provider-meta">${metaHtml}</div>
         </div>
         ${selectHtml}
-        <span class="provider-status-dot"></span>
+        <span class="provider-status-dot" aria-label="Connected"></span>
         <button class="connect-btn" data-action="disconnect" data-provider="${config.key}" style="color:var(--muted-dim);border-color:var(--ink-2)">Disconnect</button>
       `;
     } else {
