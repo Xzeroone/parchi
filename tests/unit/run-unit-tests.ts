@@ -56,59 +56,59 @@ import { runToolDefinitionsSuite } from './suites/tool-definitions.test.js';
 import { runToolSchemaConversionSuite } from './suites/tool-schema-conversion.test.js';
 import { runXmlToolParserSuite } from './suites/xml-tool-parser.test.js';
 
-export function runUnitTests() {
+export async function runUnitTests() {
   log('╔════════════════════════════════════════╗', 'info');
   log('║       Unit Tests - Browser Tools       ║', 'info');
   log('╚════════════════════════════════════════╝', 'info');
 
   const runner = new TestRunner();
 
-  runToolDefinitionsSuite(runner);
-  runAiProviderConfigSuite(runner);
-  runToolSchemaConversionSuite(runner);
-  runInputValidationSuite(runner);
-  runErrorHandlingSuite(runner);
-  runApiErrorClassificationSuite(runner);
-  runOauthModelNormalizationSuite(runner);
-  runOauthProfileContextSyncSuite(runner);
-  runOauthCandidatesSuite(runner);
-  runRuntimeProfileRoutingSuite(runner);
-  runCodexOauthConfigSuite(runner);
-  runMessageSchemaSuite(runner);
-  runModelMessageConvertSuite(runner);
-  runConversationCompactionSuite(runner);
-  runCompactionStressTestV2Suite(runner);
-  runThinkingExtractionSuite(runner);
-  runMessageUtilsSuite(runner);
-  runModelListingSuite(runner);
-  runModelCapabilitiesSuite(runner);
-  runReportImagesSuite(runner);
-  runRecordingSummarySuite(runner);
-  runPanelSessionMemorySuite(runner);
-  runPlanNormalizationSuite(runner);
-  runCreateProfileSuite(runner);
-  runResolveProfileSuite(runner);
-  runVisionSettingsSuite(runner);
-  runExtractConnectionConfigSuite(runner);
-  runExtractFromProviderSuite(runner);
-  runConnectionGuardSuite(runner);
-  runProfileCompatibilitySuite(runner);
-  runProviderInstanceBaseTypeSuite(runner);
-  runProviderInstanceFeaturesSuite(runner);
-  runRetryHelpersSuite(runner);
-  runRuntimeMessagesCoreSuite(runner);
-  runRuntimeMessagesValidationSuite(runner);
-  runRuntimeMessagesStreamingSuite(runner);
-  runRuntimeMessagesImagesSuite(runner);
-  runRuntimeMessagesSessionSuite(runner);
-  runRuntimeTypesSuite(runner);
-  runStatePersistenceSuite(runner);
-  runXmlToolParserSuite(runner);
-  runOrchestratorNormalizationSuite(runner);
-  runJsonRpcRequestSuite(runner);
-  runJsonRpcNotificationSuite(runner);
-  runJsonRpcResponseSuite(runner);
-  runJsonRpcMutualExclusivitySuite(runner);
+  await runToolDefinitionsSuite(runner);
+  await runAiProviderConfigSuite(runner);
+  await runToolSchemaConversionSuite(runner);
+  await runInputValidationSuite(runner);
+  await runErrorHandlingSuite(runner);
+  await runApiErrorClassificationSuite(runner);
+  await runOauthModelNormalizationSuite(runner);
+  await runOauthProfileContextSyncSuite(runner);
+  await runOauthCandidatesSuite(runner);
+  await runRuntimeProfileRoutingSuite(runner);
+  await runCodexOauthConfigSuite(runner);
+  await runMessageSchemaSuite(runner);
+  await runModelMessageConvertSuite(runner);
+  await runConversationCompactionSuite(runner);
+  await runCompactionStressTestV2Suite(runner);
+  await runThinkingExtractionSuite(runner);
+  await runMessageUtilsSuite(runner);
+  await runModelListingSuite(runner);
+  await runModelCapabilitiesSuite(runner);
+  await runReportImagesSuite(runner);
+  await runRecordingSummarySuite(runner);
+  await runPanelSessionMemorySuite(runner);
+  await runPlanNormalizationSuite(runner);
+  await runCreateProfileSuite(runner);
+  await runResolveProfileSuite(runner);
+  await runVisionSettingsSuite(runner);
+  await runExtractConnectionConfigSuite(runner);
+  await runExtractFromProviderSuite(runner);
+  await runConnectionGuardSuite(runner);
+  await runProfileCompatibilitySuite(runner);
+  await runProviderInstanceBaseTypeSuite(runner);
+  await runProviderInstanceFeaturesSuite(runner);
+  await runRetryHelpersSuite(runner);
+  await runRuntimeMessagesCoreSuite(runner);
+  await runRuntimeMessagesValidationSuite(runner);
+  await runRuntimeMessagesStreamingSuite(runner);
+  await runRuntimeMessagesImagesSuite(runner);
+  await runRuntimeMessagesSessionSuite(runner);
+  await runRuntimeTypesSuite(runner);
+  await runStatePersistenceSuite(runner);
+  await runXmlToolParserSuite(runner);
+  await runOrchestratorNormalizationSuite(runner);
+  await runJsonRpcRequestSuite(runner);
+  await runJsonRpcNotificationSuite(runner);
+  await runJsonRpcResponseSuite(runner);
+  await runJsonRpcMutualExclusivitySuite(runner);
 
   return runner.printSummary();
 }
@@ -116,6 +116,6 @@ export function runUnitTests() {
 const isMain = process.argv[1] ? import.meta.url === pathToFileURL(process.argv[1]).href : false;
 
 if (isMain) {
-  const success = runUnitTests();
+  const success = await runUnitTests();
   process.exit(success ? 0 : 1);
 }

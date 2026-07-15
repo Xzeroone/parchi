@@ -3,14 +3,14 @@ import { computeConfiguredContextLimit } from '../../../packages/extension/sidep
 import { syncOAuthProfiles } from '../../../packages/extension/sidepanel/ui/settings/oauth-profiles.js';
 import { type TestRunner, log } from '../shared/runner.js';
 
-export function runOauthProfileContextSyncSuite(runner: TestRunner) {
+export async function runOauthProfileContextSyncSuite(runner: TestRunner) {
   log('\n=== Testing syncOAuthProfiles contextLimit resolution (xAI / Grok) ===', 'info');
 
-  runner.test('syncOAuthProfiles is loaded and callable (covers sync module for api context path)', () => {
+  await runner.test('syncOAuthProfiles is loaded and callable (covers sync module for api context path)', () => {
     runner.assertTrue(typeof syncOAuthProfiles === 'function');
   });
 
-  runner.test(
+  await runner.test(
     'syncOAuthProfiles with mocked api data sets contextLimit for a brand-new profile from apiModelEntries (not static 256k)',
     async () => {
       const origFetch = (globalThis as any).fetch;
@@ -19,7 +19,7 @@ export function runOauthProfileContextSyncSuite(runner: TestRunner) {
       (globalThis as any).fetch = async () =>
         ({
           ok: true,
-          json: async () => ({ data: [{ id: 'grok-api-128k', context_length: 128000 }] }),
+          json: async () => ({ data: [{ id: 'grok-4', context_length: 128000 }] }),
         }) as any;
 
       (globalThis as any).chrome = {
@@ -54,11 +54,11 @@ export function runOauthProfileContextSyncSuite(runner: TestRunner) {
 
       const prof = ui.configs['oauth:xai'] || {};
       const prov = (Object.values(ui.providers || {}).find((p: any) => p && p.oauthProviderKey === 'xai') as any) || {};
-      const testM = (prov.models || []).find((m: any) => m.id === 'grok-api-128k');
+      const testM = (prov.models || []).find((m: any) => m.id === 'grok-4');
 
       runner.assertEqual(prof.contextLimit, 128000);
       runner.assertEqual(testM?.contextWindow, 128000);
-      runner.assertEqual(prof.model, 'grok-api-128k');
+      runner.assertEqual(prof.model, 'grok-4');
 
       const comp = computeConfiguredContextLimit(prof);
       runner.assertEqual(comp, 128000);
@@ -68,7 +68,7 @@ export function runOauthProfileContextSyncSuite(runner: TestRunner) {
     },
   );
 
-  runner.test('syncOAuthProfiles preserves a user-customized contextLimit on re-sync (same model)', async () => {
+  await runner.test('syncOAuthProfiles preserves a user-customized contextLimit on re-sync (same model)', async () => {
     // Regression guard: OAuth sync must never silently overwrite a contextLimit the
     // user already set, even when live API data for the same model disagrees.
     const origFetch = (globalThis as any).fetch;
@@ -148,7 +148,7 @@ export function runOauthProfileContextSyncSuite(runner: TestRunner) {
     (globalThis as any).chrome = origChrome;
   });
 
-  runner.test(
+  await runner.test(
     'syncOAuthProfiles backfills a missing contextLimit from live api data when the model is unchanged',
     async () => {
       const origFetch = (globalThis as any).fetch;
