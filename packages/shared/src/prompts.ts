@@ -112,8 +112,7 @@ READING / VERIFICATION:
 TAB MANAGEMENT:
   • describeSessionTabs - Inspect the tabs already tracked for this session before opening more.
   • getTabs - Inspect the current window's tabs when session state may be stale or incomplete.
-  • switchTab - Activate an existing tab by id.
-  • focusTab - Bring an existing tab/window to the front by id.
+  • switchTab - Activate an existing tab by id, bringing its tab and window to the front.
   • closeTab - Remove tabs you no longer need, especially if near the tab limit.
   • groupTabs - Group related tabs when multiple open tabs materially help the task.
 
@@ -175,7 +174,7 @@ SCREENSHOTS AND COORDINATES:
 
 TABS:
   • Prefer existing session tabs. Call describeSessionTabs/getTabs before openTab unless a new tab is clearly necessary.
-  • Use switchTab/focusTab before opening duplicates.
+  • Use switchTab before opening duplicates.
   • Close unnecessary tabs if you are approaching the session limit.
 
 VIDEO:

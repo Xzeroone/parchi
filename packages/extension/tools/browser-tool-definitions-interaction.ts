@@ -17,12 +17,13 @@ export const INTERACTION_TOOLS = [
   },
   {
     name: 'clickAt',
-    description: 'Click at exact viewport coordinates (x, y). Use when selectors fail.',
+    description:
+      'Click at exact viewport coordinates (x, y). Use when selectors fail. Coordinates are CSS/viewport pixels (as in getBoundingClientRect), not device pixels — do not pass raw screenshot pixel coordinates on a display with devicePixelRatio != 1.',
     input_schema: {
       type: 'object',
       properties: {
-        x: { type: 'number', description: 'X coordinate from left edge.' },
-        y: { type: 'number', description: 'Y coordinate from top edge.' },
+        x: { type: 'number', description: 'X coordinate from left edge, in CSS/viewport pixels.' },
+        y: { type: 'number', description: 'Y coordinate from top edge, in CSS/viewport pixels.' },
         button: { type: 'string', enum: ['left', 'right', 'middle'], description: 'Mouse button.' },
         doubleClick: { type: 'boolean', description: 'Double-click if true.' },
         tabId: { type: 'number', description: 'Optional tab id.' },
@@ -32,7 +33,8 @@ export const INTERACTION_TOOLS = [
   },
   {
     name: 'type',
-    description: 'Type text into input/textarea/contenteditable.',
+    description:
+      'Type text into input/textarea/contenteditable. Supports the same extended selector syntax as click (`css=`, `xpath=`, `text=`, `tag.contains("...")`).',
     input_schema: {
       type: 'object',
       properties: {
@@ -46,12 +48,12 @@ export const INTERACTION_TOOLS = [
   },
   {
     name: 'pressKey',
-    description: 'Press a key in the page.',
+    description: 'Press a key in the page. Unlike click/type, `selector` is a plain CSS selector only.',
     input_schema: {
       type: 'object',
       properties: {
         key: { type: 'string', description: 'Keyboard key (e.g., Enter).' },
-        selector: { type: 'string', description: 'Optional selector to target.' },
+        selector: { type: 'string', description: 'Optional CSS selector to target.' },
         tabId: { type: 'number', description: 'Optional tab id.' },
       },
       required: ['key'],
@@ -59,13 +61,13 @@ export const INTERACTION_TOOLS = [
   },
   {
     name: 'scroll',
-    description: 'Scroll the page.',
+    description: 'Scroll the page. Unlike click/type, `selector` is a plain CSS selector only.',
     input_schema: {
       type: 'object',
       properties: {
         direction: { type: 'string', description: 'up, down, top, or bottom.' },
         amount: { type: 'number', description: 'Scroll amount in pixels.' },
-        selector: { type: 'string', description: 'Optional scrollable container.' },
+        selector: { type: 'string', description: 'Optional scrollable container (CSS selector).' },
         tabId: { type: 'number', description: 'Optional tab id.' },
       },
     },

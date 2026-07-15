@@ -48,6 +48,9 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
 
   const result = await ctx.runInTab(
     tabId,
+    // chrome.scripting.executeScript serializes `func` via Function.prototype.toString()
+    // and re-runs it with no closure — runPageScript (a module-scope import) must be
+    // reconstructed from its own source, passed in as an arg, rather than referenced directly.
     async (
       scopeSelector: string,
       text: string,
@@ -55,7 +58,12 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
       runtimeArgs: unknown[],
       timeoutLimit: number,
       pollMs: number,
+      runPageScriptSrc: string,
     ) => {
+      const runPageScriptFn = new Function(`return (${runPageScriptSrc});`)() as (
+        s: string,
+        a: unknown[],
+      ) => Promise<unknown>;
       const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
       const startedAt = Date.now();
       let attempts = 0;
@@ -77,14 +85,18 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
           if (!element) return { done: false };
         }
 
-        const textScope = element ?? document.body;
-        if (text && !(textScope?.textContent || '').includes(text)) {
-          return { done: false };
+        // Only touch `document` when text matching is requested — pure-script waits
+        // must not require a DOM (and unit tests exercise that path in Node).
+        if (text) {
+          const textScope = element ?? document.body;
+          if (!(textScope?.textContent || '').includes(text)) {
+            return { done: false };
+          }
         }
 
         if (source) {
           try {
-            if (!(await runPageScript(source, runtimeArgs))) {
+            if (!(await runPageScriptFn(source, runtimeArgs))) {
               return { done: false };
             }
           } catch (error) {
@@ -126,7 +138,7 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
         attempts,
       };
     },
-    [selector, expectedText, script, scriptArgs, timeoutMs, pollIntervalMs] as const,
+    [selector, expectedText, script, scriptArgs, timeoutMs, pollIntervalMs, runPageScript.toString()] as const,
   );
 
   if (timeout.wasClamped && result && typeof result === 'object') {
