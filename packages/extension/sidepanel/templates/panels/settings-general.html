@@ -1,9 +1,9 @@
-<!-- ===== PROVIDERS ===== -->
+<!-- ===== CONNECT (Grok only) ===== -->
 <div class="settings-tab-pane" data-pane="providers">
     <select id="activeConfig" class="hidden"><option value="default">Default</option></select>
 
-    <div class="settings-section-label">Subscription Providers</div>
-    <p class="settings-section-desc">Connect your existing AI subscriptions. No API keys needed.</p>
+    <div class="settings-section-label">Grok</div>
+    <p class="settings-section-desc">Connect your Grok account. No API key needed.</p>
     <div id="oauthProviderGrid" class="provider-row-list"></div>
     <div id="oauthDeviceCodePrompt" class="oauth-device-prompt hidden">
         <div class="oauth-device-prompt-inner">
@@ -17,70 +17,6 @@
                 <button id="oauthDeviceCodeOpenBtn" class="btn btn-primary">Open Link</button>
                 <button id="oauthDeviceCodeCancelBtn" class="btn btn-secondary">Cancel</button>
             </div>
-        </div>
-    </div>
-
-    <div class="settings-section-label">Paid Mode</div>
-    <p class="settings-section-desc">Optional managed routing and billing through Parchi if you do not want to bring your own keys.</p>
-    <div id="paidModeProviderGrid" class="provider-row-list"></div>
-
-    <div class="settings-section-label">API Keys</div>
-    <p class="settings-section-desc">Add your own API keys. Keys are stored locally and never sent to our servers.</p>
-    <div id="apiProviderGrid" class="provider-row-list"></div>
-    <div id="apiProviderEditor" class="provider-inline-editor hidden">
-        <div class="form-group">
-            <label for="providerEditorKey">API Key</label>
-            <input type="password" id="providerEditorKey" placeholder="Enter your API key..." />
-        </div>
-        <div class="form-group" id="providerEditorEndpointGroup">
-            <label for="providerEditorEndpoint">API URL <span class="optional-badge">optional</span></label>
-            <input type="text" id="providerEditorEndpoint" placeholder="https://..." />
-        </div>
-        <div class="form-row">
-            <button id="providerEditorSaveBtn" class="btn btn-primary" style="flex:1">Save</button>
-            <button id="providerEditorCancelBtn" class="btn btn-secondary" style="flex:1">Cancel</button>
-        </div>
-    </div>
-
-    <div class="settings-section-label">Custom</div>
-    <p class="settings-section-desc">Add custom OpenAI-compatible providers.</p>
-    <div id="customProviderList" class="provider-row-list"></div>
-    <button id="addCustomProviderBtn" class="btn btn-secondary" style="align-self: flex-start; margin-top: 4px;">+ Add Provider</button>
-    <div id="customProviderForm" class="custom-provider-form hidden">
-        <div class="custom-provider-form-header">
-            <span class="settings-section-label" style="padding:0">New Provider</span>
-            <button id="customProviderFormCloseBtn" class="icon-btn" title="Close">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-        </div>
-        <div class="form-row">
-            <div class="form-group" style="flex:1">
-                <label for="customProviderName">Name</label>
-                <input type="text" id="customProviderName" placeholder="My Provider" />
-            </div>
-            <div class="form-group" style="flex:1">
-                <label for="customProviderSdkType">SDK</label>
-                <select id="customProviderSdkType">
-                    <option value="openai-compatible">OpenAI-compatible</option>
-                    <option value="anthropic">Anthropic-compatible</option>
-                </select>
-            </div>
-        </div>
-        <div class="form-group">
-            <label for="customProviderEndpoint">Base URL</label>
-            <input type="text" id="customProviderEndpoint" placeholder="https://api.example.com/v1" style="font-family: var(--font-mono); font-size: 12px;" />
-        </div>
-        <div class="form-group">
-            <label for="customProviderApiKey">API Key</label>
-            <input type="password" id="customProviderApiKey" placeholder="sk-..." />
-        </div>
-        <div class="form-group">
-            <label for="customProviderModels">Model IDs <span class="optional-badge">comma-separated</span></label>
-            <input type="text" id="customProviderModels" placeholder="model-a, model-b" style="font-family: var(--font-mono); font-size: 12px;" />
-        </div>
-        <div class="form-row">
-            <button id="customProviderSaveBtn" class="btn btn-primary" style="flex:1">Save</button>
-            <button id="customProviderCancelBtn" class="btn btn-secondary" style="flex:1">Cancel</button>
         </div>
     </div>
 </div>

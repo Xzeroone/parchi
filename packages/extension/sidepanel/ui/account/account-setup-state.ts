@@ -100,7 +100,7 @@ sidePanelProto.getSetupFlowState = async function getSetupFlowState() {
     paidStatusTone = 'warning';
   } else if (!hasPaidModelConfigured) {
     paidStatusLabel = 'Paid: model missing';
-    paidStatusDetail = 'Choose a model in your active paid profile (Parchi/OpenRouter).';
+    paidStatusDetail = 'Choose a model in your active paid profile.';
     paidStatusTone = 'warning';
   } else if (!paidAccess) {
     paidStatusLabel = 'Paid: billing inactive';

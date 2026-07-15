@@ -78,14 +78,14 @@ sidePanelProto.populateModelSelect = function populateModelSelect() {
     }
   }
 
-  // Hidden select for compat
+  // Hidden select for compat — show model label only (no provider/sub-provider prefix)
   const select = this.elements.modelSelect;
   if (select) {
     select.innerHTML = '';
     for (const m of _allModels) {
       const opt = document.createElement('option');
       opt.value = m.value;
-      opt.textContent = `${m.providerName}/${m.modelLabel}`;
+      opt.textContent = m.modelLabel;
       if (m.providerId === activeProviderId && m.modelId === activeModelId) opt.selected = true;
       select.appendChild(opt);
     }
@@ -153,12 +153,15 @@ sidePanelProto._renderModelDropdownList = function _renderModelDropdownList(quer
     _filteredCache = filtered;
   }
 
+  // Single-provider (Grok-only) product: skip provider group headers / badges.
+  // Multi-provider only if stale instances remain in storage.
+  const showProviderChrome = new Set(filtered.map((x) => x.providerName)).size > 1;
   let currentGroup = '';
   for (let i = 0; i < filtered.length; i++) {
     const m = filtered[i];
     const isActive = m.providerId === activeProviderId && m.modelId === activeModelId;
 
-    if (m.providerName !== currentGroup) {
+    if (showProviderChrome && m.providerName !== currentGroup) {
       currentGroup = m.providerName;
       const groupEl = document.createElement('div');
       groupEl.className = 'model-dropdown-group';
@@ -172,7 +175,7 @@ sidePanelProto._renderModelDropdownList = function _renderModelDropdownList(quer
     item.innerHTML = `
       <span class="model-dropdown-item-check">${isActive ? '✓' : ''}</span>
       <span class="model-dropdown-item-name">${escapeHtml(m.modelLabel)}</span>
-      <span class="model-dropdown-item-badge">${escapeHtml(m.providerName)}</span>
+      ${showProviderChrome ? `<span class="model-dropdown-item-badge">${escapeHtml(m.providerName)}</span>` : ''}
     `;
     item.addEventListener('click', () => {
       this._selectFromModelDropdown?.(m.providerId, m.modelId);

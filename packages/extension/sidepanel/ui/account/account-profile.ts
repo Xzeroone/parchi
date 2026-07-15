@@ -61,8 +61,8 @@ sidePanelProto.handleSetupAccessClick = async function handleSetupAccessClick() 
   const setupState = await this.getSetupFlowState();
   if (!setupState.hasChoice && !setupState.hasConfiguredProvider) {
     setHidden(this.elements.accountOnboardingModal, false);
-    this.updateStatus('Choose paid access or add your own API key to continue.', 'warning');
-    updateStatusCopy(this, 'Choose paid access or add your own API key to continue.');
+    this.updateStatus('Connect Grok to continue, or enable optional managed billing.', 'warning');
+    updateStatusCopy(this, 'Connect Grok to continue, or enable optional managed billing.');
     return;
   }
 
@@ -73,8 +73,8 @@ sidePanelProto.handleSetupAccessClick = async function handleSetupAccessClick() 
   }
 
   this.openSettingsPanel?.();
-  this.switchSettingsTab?.('setup');
-  this.updateStatus('Finish provider setup by adding your API key and model.', 'active');
+  this.switchSettingsTab?.('connect');
+  this.updateStatus('Connect Grok to finish setup.', 'active');
 };
 
 sidePanelProto.showAccountOnboardingIfNeeded = async function showAccountOnboardingIfNeeded() {
@@ -94,8 +94,8 @@ sidePanelProto.showAccountOnboardingIfNeeded = async function showAccountOnboard
     return;
   }
 
-  updateStatusCopy(this, 'Choose paid access or add your own API key to continue.');
-  this.updateStatus('Pay or add your own API key to continue.', 'warning');
+  updateStatusCopy(this, 'Connect Grok to continue, or enable optional managed billing.');
+  this.updateStatus('Connect Grok to continue.', 'warning');
   // Keep onboarding non-blocking by default; setup button opens guided flow when needed.
   setHidden(this.elements.accountOnboardingModal, true);
   await this.refreshSetupFlowUi();
@@ -109,14 +109,13 @@ sidePanelProto.chooseAccountMode = async function chooseAccountMode(mode: 'byok'
   setHidden(this.elements.accountOnboardingModal, true);
   if (mode === ACCOUNT_MODE_BYOK) {
     this.openSettingsPanel?.();
-    this.switchSettingsTab?.('setup');
-    this.updateStatus('Provider setup selected. Add your API key and model in Setup.', 'success');
-    updateStatusCopy(this, 'Add provider mode selected. Enter API key + model to finish setup.');
+    this.switchSettingsTab?.('connect');
+    this.updateStatus('Connect Grok to finish setup.', 'success');
+    updateStatusCopy(this, 'Connect Grok in Settings → Connect.');
     await this.refreshSetupFlowUi();
     return;
   }
-  this.openSettingsPanel?.();
-  this.switchSettingsTab?.('oauth');
+  this.openAccountPanel?.();
   await this.ensureManagedProviderDefaults({ forceActivate: true });
   this.updateStatus('Parchi managed mode selected. Sign in, then start billing to continue.', 'active');
   updateStatusCopy(this, 'Sign in, then start billing to activate Parchi managed access.');

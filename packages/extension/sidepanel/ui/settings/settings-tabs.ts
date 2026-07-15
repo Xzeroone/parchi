@@ -46,9 +46,8 @@ sidePanelProto.switchSettingsTab = function switchSettingsTab(
   }
 
   if (resolvedTab === 'providers') {
+    // Connect tab is Grok-only (OAuth). Paid/API-key/custom provider grids were removed.
     this.renderOAuthProviderGrid?.();
-    this.renderPaidModeProviderGrid?.();
-    this.renderApiProviderGrid?.();
   }
   if (resolvedTab === 'model') {
     this.renderModelSelectorGrid?.();

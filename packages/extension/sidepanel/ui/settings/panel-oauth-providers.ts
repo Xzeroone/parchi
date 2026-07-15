@@ -61,13 +61,19 @@ sidePanelProto.renderOAuthProviderGrid = async function renderOAuthProviderGrid(
     row.className = `provider-row${connected ? ' connected' : ' dim'}`;
     row.dataset.provider = config.key;
 
+    // Grok-only connect surface: status is "Connected" / "Not connected" (or email/error).
+    // Never surface sub-provider / "via …" / multi-vendor wording here.
     let metaHtml = 'Not connected';
     if (connected) {
       const modelList = fetchedModels.length > 0 ? fetchedModels : config.models.map((m) => m.id);
       const modelOptions = modelList
-        .map((id: string) => `<option value="${id}"${id === currentModel ? ' selected' : ''}>${id}</option>`)
+        .map((id: string) => {
+          const known = config.models.find((m) => m.id === id);
+          const label = known?.label || id;
+          return `<option value="${id}"${id === currentModel ? ' selected' : ''}>${label}</option>`;
+        })
         .join('');
-      metaHtml = email || 'Connected';
+      metaHtml = email ? `Connected · ${email}` : 'Connected';
       const selectHtml = `<select class="oauth-model-select" data-provider="${config.key}">${modelOptions}</select>`;
       row.innerHTML = `
         <span class="provider-logo">${svg}</span>

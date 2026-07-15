@@ -56,23 +56,10 @@ function formatContextWindow(value?: number): string {
   return String(value);
 }
 
-/** Exact model IDs or prefixes to enable by default. */
-const DEFAULT_ENABLED_PREFIXES = [
-  'gpt-5.4', // gpt-5.4, gpt-5.4-mini, etc.
-  'claude-sonnet-4.6',
-  'claude-sonnet-4-6',
-  'claude-opus-4.6',
-  'claude-opus-4-6',
-  'kimi', // kimi-for-coding, kimi-k2, etc.
-  'grok', // grok-code-fast-1, etc.
-  'minimax',
-  'MiniMax',
-  'glm-5', // glm-5.1, glm-5v-turbo
-];
+/** Exact model IDs or prefixes to enable by default (Grok-only product surface). */
+const DEFAULT_ENABLED_PREFIXES = ['grok'];
 
-function isDefaultEnabled(modelId: string, providerType: string): boolean {
-  // All openrouter provider models enabled
-  if (providerType === 'openrouter') return true;
+function isDefaultEnabled(modelId: string, _providerType: string): boolean {
   const lower = modelId.toLowerCase();
   return DEFAULT_ENABLED_PREFIXES.some((p) => lower.startsWith(p.toLowerCase()));
 }
@@ -109,8 +96,7 @@ sidePanelProto.renderModelSelectorGrid = function renderModelSelectorGrid() {
   );
 
   if (!providers.length) {
-    grid.innerHTML =
-      '<div class="model-selector-empty">Connect a provider in the Providers tab to see available models.</div>';
+    grid.innerHTML = '<div class="model-selector-empty">Connect Grok in the Connect tab to see available models.</div>';
     return;
   }
 
