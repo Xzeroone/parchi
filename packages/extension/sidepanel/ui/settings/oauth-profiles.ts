@@ -1,9 +1,14 @@
-import { OAUTH_PROVIDERS, fetchProviderModels, getAccessToken, getAllProviderStates } from '../../../oauth/manager.js';
+import {
+  OAUTH_PROVIDERS,
+  fetchProviderModelsDetailed,
+  getAccessToken,
+  getAllProviderStates,
+} from '../../../oauth/manager.js';
 import { fetchOpenAICompatibleModelEntries } from '../../../oauth/model-listing.js';
 import { normalizeOAuthModelIdForProvider } from '../../../oauth/model-normalization.js';
 import type { OAuthProviderKey } from '../../../oauth/types.js';
 import type { OAuthProviderConfig } from '../../../oauth/types.js';
-import { mergeProviderModels } from '../../../state/provider-models.js';
+import { mergeProviderModelsWithOptions } from '../../../state/provider-models.js';
 import { buildProviderInstanceId, ensureProviderModel } from '../../../state/provider-registry.js';
 import type { SidePanelUI } from '../core/panel-ui.js';
 
@@ -87,13 +92,16 @@ export async function syncOAuthProfiles(ui: SidePanelUI): Promise<void> {
     const connected = Boolean(state?.connected && state?.tokens?.accessToken);
     let discoveredModels: string[] = [];
     let apiModelEntries: any[] = [];
+    let fetchResult: { models: string[]; live: boolean } | null = null;
 
     if (connected) {
       try {
-        discoveredModels = await fetchProviderModels(config.key as OAuthProviderKey);
+        fetchResult = await fetchProviderModelsDetailed(config.key as OAuthProviderKey);
       } catch {
-        discoveredModels = [];
+        fetchResult = { models: [], live: false };
       }
+      discoveredModels = fetchResult.models;
+
       if (config.key === 'xai' && config.apiBaseUrl) {
         try {
           const token = await getAccessToken(config.key as OAuthProviderKey);
@@ -104,7 +112,11 @@ export async function syncOAuthProfiles(ui: SidePanelUI): Promise<void> {
           apiModelEntries = [];
         }
       }
+    } else {
+      discoveredModels = [];
     }
+
+    const liveSourcePresent = connected && fetchResult?.live === true;
 
     // Prefer a rich API-sourced model id for the default when available, so a
     // brand-new (non-static) discovered id becomes the profile model instead of
@@ -130,12 +142,10 @@ export async function syncOAuthProfiles(ui: SidePanelUI): Promise<void> {
         oauthEmail: state?.email,
         oauthError: state?.error,
         isConnected: connected,
-        models: mergeProviderModels(
+        models: mergeProviderModelsWithOptions(
           `${config.key}-oauth`,
-          config.models || [],
-          priorProvider?.models || [],
-          discoveredModels,
-          apiModelEntries,
+          [config.models || [], priorProvider?.models || [], discoveredModels, apiModelEntries],
+          { liveSourcePresent },
         ),
         createdAt: Number(priorProvider?.createdAt || Date.now()),
         updatedAt: Date.now(),
