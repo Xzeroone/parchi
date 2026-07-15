@@ -164,10 +164,18 @@ export const getSidePanelElements = (): SidePanelElements => ({
   permissionScreenshots: byId<HTMLInputElement>('permissionScreenshots'),
   allowedDomains: byId<HTMLTextAreaElement>('allowedDomains'),
 
-  // Account + billing
+  // Account — Grok connection identity
   accountOnboardingModal: byId<HTMLElement>('accountOnboardingModal'),
   accountChooseByokBtn: byId<HTMLButtonElement>('accountChooseByokBtn'),
   accountChoosePaidBtn: byId<HTMLButtonElement>('accountChoosePaidBtn'),
+  accountGrokName: byId<HTMLElement>('accountGrokName'),
+  accountGrokMeta: byId<HTMLElement>('accountGrokMeta'),
+  accountGrokStatusDot: byId<HTMLElement>('accountGrokStatusDot'),
+  accountGrokStatusText: byId<HTMLElement>('accountGrokStatusText'),
+  accountGrokRowDot: byId<HTMLElement>('accountGrokRowDot'),
+  accountGrokProviderRow: byId<HTMLElement>('accountGrokProviderRow'),
+  accountGrokConnectBtn: byId<HTMLButtonElement>('accountGrokConnectBtn'),
+  accountGrokLogo: byId<HTMLElement>('accountGrokLogo'),
   accountAuthUnavailable: byId<HTMLElement>('accountAuthUnavailable'),
   accountAuthSignedOut: byId<HTMLElement>('accountAuthSignedOut'),
   accountAuthSignedIn: byId<HTMLElement>('accountAuthSignedIn'),

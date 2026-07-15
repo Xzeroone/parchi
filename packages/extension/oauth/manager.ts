@@ -1,4 +1,5 @@
-import { type DeviceCodeFlowCallbacks, refreshQwenToken, runDeviceCodeFlow } from './flow-device-code.js';
+import { type DeviceCodeFlowCallbacks, runDeviceCodeFlow } from './flow-device-code.js';
+import { refreshQwenToken } from './flow-token-refresh.js';
 import { OAUTH_PROVIDERS } from './providers.js';
 import {
   disconnectProvider,

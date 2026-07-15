@@ -25,36 +25,10 @@ sidePanelProto.refreshSetupFlowUi = async function refreshSetupFlowUi() {
 };
 
 sidePanelProto.renderPaidModeProviderGrid = async function renderPaidModeProviderGrid() {
+  // Paid/managed provider grid removed — product is Grok-only.
+  // Keep method as a no-op for any lingering callers.
   const grid = this.elements.paidModeProviderGrid || document.getElementById('paidModeProviderGrid');
-  if (!grid) return;
-
-  const setupState = await this.getSetupFlowState();
-  const row = document.createElement('div');
-  const connected = setupState.signedInPaid === true && setupState.paidAccess === true;
-  row.className = `provider-row${connected ? ' connected' : ' dim'}`;
-  row.innerHTML = `
-    <span class="provider-logo">☻</span>
-    <div class="provider-info">
-      <div class="provider-name">Parchi Managed <span class="optional-badge">Optional</span></div>
-      <div class="provider-meta">${this.escapeHtml(setupState.paidStatusLabel || 'Paid mode')}</div>
-    </div>
-    <span class="provider-status-dot${connected ? '' : ' off'}"></span>
-    <button class="connect-btn" data-action="open-account">${connected ? 'Manage' : 'Open billing'}</button>
-  `;
-
-  grid.innerHTML = '';
-  grid.appendChild(row);
-  row.addEventListener('click', async (event: Event) => {
-    const action = (event.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
-    if (action !== 'open-account') return;
-    this.openAccountPanel?.();
-    if (!setupState.signedInPaid || !setupState.paidSetupComplete) {
-      this.updateStatus(
-        'Paid mode is optional. Sign in or start billing from Account & Billing if you want managed routing.',
-        'active',
-      );
-    }
-  });
+  if (grid) grid.innerHTML = '';
 };
 
 sidePanelProto.handleSetupAccessClick = async function handleSetupAccessClick() {
@@ -115,10 +89,11 @@ sidePanelProto.chooseAccountMode = async function chooseAccountMode(mode: 'byok'
     await this.refreshSetupFlowUi();
     return;
   }
-  this.openAccountPanel?.();
-  await this.ensureManagedProviderDefaults({ forceActivate: true });
-  this.updateStatus('Parchi managed mode selected. Sign in, then start billing to continue.', 'active');
-  updateStatusCopy(this, 'Sign in, then start billing to activate Parchi managed access.');
+  // Managed path deprecated — always route to Grok connect.
+  this.openSettingsPanel?.();
+  this.switchSettingsTab?.('connect');
+  this.updateStatus('Connect Grok to finish setup.', 'active');
+  updateStatusCopy(this, 'Connect Grok in Settings → Connect.');
   await this.refreshSetupFlowUi();
 };
 

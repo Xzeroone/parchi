@@ -2,84 +2,56 @@
     <div class="panel-header panel-header-with-actions">
         <div>
             <span class="panel-title">Account</span>
-            <span class="panel-subtitle">Identity, Stripe billing, and managed runtime status.</span>
+            <span class="panel-subtitle">Your Grok connection</span>
         </div>
         <button id="accountBackToSettingsBtn" class="btn btn-secondary panel-header-btn" type="button">Settings</button>
     </div>
     <div class="settings-content account-panel-content">
         <div class="account-overview-card">
             <div>
-                <div class="account-overview-eyebrow">Parchi Managed</div>
-                <div class="account-overview-title">Metered billing for managed runtime access.</div>
+                <div class="account-overview-eyebrow">Grok</div>
+                <div id="accountGrokName" class="account-overview-title">Not connected</div>
+                <div id="accountGrokMeta" class="account-inline-note">Connect Grok to run chat and tools.</div>
             </div>
-            <div id="accountStatusTextSignedIn" class="account-inline-note"></div>
+            <span id="accountGrokStatusDot" class="provider-status-dot off" aria-hidden="true"></span>
         </div>
 
-        <div id="accountAuthUnavailable" class="account-inline-note hidden">
-            Convex backend is not configured in this build.
+        <div class="settings-section-label">Connection</div>
+        <div id="accountGrokRow" class="provider-row-list">
+            <div class="provider-row dim" id="accountGrokProviderRow">
+                <span class="provider-logo" id="accountGrokLogo"></span>
+                <div class="provider-info">
+                    <div class="provider-name">Grok</div>
+                    <div class="provider-meta" id="accountGrokStatusText">Not connected</div>
+                </div>
+                <span class="provider-status-dot off" id="accountGrokRowDot"></span>
+                <button class="connect-btn" id="accountGrokConnectBtn" type="button">Connect</button>
+            </div>
         </div>
 
-        <div id="accountAuthSignedOut" class="account-auth-block account-auth-block-panel">
-            <div class="account-inline-note">Sign in for managed billing, or connect Grok from Settings → Connect.</div>
-            <div class="account-auth-grid">
-                <div class="form-group">
-                    <label for="accountEmailInput">Email</label>
-                    <input type="email" id="accountEmailInput" placeholder="you@example.com" />
-                </div>
-                <div class="form-group">
-                    <label for="accountPasswordInput">Password</label>
-                    <input type="password" id="accountPasswordInput" placeholder="At least 8 characters" />
-                </div>
-            </div>
-            <div class="form-row">
-                <button id="accountSignInBtn" class="btn btn-primary" style="flex: 1;">Sign In</button>
-                <button id="accountSignUpBtn" class="btn btn-secondary" style="flex: 1;">Sign Up</button>
-            </div>
-            <div class="form-row">
-                <button id="accountGoogleBtn" class="btn btn-secondary" style="flex: 1;">Continue with Google</button>
-                <button id="accountGithubBtn" class="btn btn-secondary" style="flex: 1;">Continue with GitHub</button>
-            </div>
-            <div id="accountStatusText" class="account-inline-note"></div>
-        </div>
+        <!-- Kept for avatar sync / legacy callers; always mirrors Grok identity -->
+        <span id="accountUserValue" class="hidden">-</span>
+        <div id="accountStatusText" class="account-inline-note"></div>
+        <div id="accountStatusTextSignedIn" class="account-inline-note"></div>
 
-        <div id="accountAuthSignedIn" class="account-auth-block hidden">
-            <div class="account-stats-grid">
-                <div class="account-stat">
-                    <span class="account-stat-label">User</span>
-                    <span id="accountUserValue" class="account-stat-value">-</span>
-                </div>
-                <div class="account-stat">
-                    <span class="account-stat-label">Billing</span>
-                    <span id="accountBillingValue" class="account-stat-value">Inactive</span>
-                </div>
-                <div class="account-stat">
-                    <span class="account-stat-label">Plan</span>
-                    <span id="accountPlanValue" class="account-stat-value">Free</span>
-                </div>
-                <div class="account-stat">
-                    <span class="account-stat-label">Usage</span>
-                    <span id="accountUsageValue" class="account-stat-value">0 req</span>
-                </div>
-                <div class="account-stat">
-                    <span class="account-stat-label">Period end</span>
-                    <span id="accountPeriodEndValue" class="account-stat-value">-</span>
-                </div>
-                <div class="account-stat">
-                    <span class="account-stat-label">Runtime</span>
-                    <span id="accountRuntimeValue" class="account-stat-value">Billing required</span>
-                </div>
-            </div>
-            <div class="form-row">
-                <button id="accountUpgradeBtn" class="btn btn-primary" style="flex: 1;">Start Billing</button>
-                <button id="accountManageBtn" class="btn btn-secondary" style="flex: 1;">Manage</button>
-            </div>
-            <div class="form-row">
-                <button id="accountRefreshBtn" class="btn btn-secondary" style="flex: 1;">Refresh</button>
-                <button id="accountSignOutBtn" class="btn btn-secondary" style="flex: 1;">Sign Out</button>
-            </div>
-            <div class="account-inline-note">
-                Usage is billed through Stripe metered billing. The extension shows local request and token counts; invoices and payment methods stay in the Stripe billing portal.
-            </div>
-        </div>
+        <!-- Legacy managed-billing nodes kept hidden so older listeners null-safe no-op -->
+        <div id="accountAuthUnavailable" class="hidden"></div>
+        <div id="accountAuthSignedOut" class="hidden"></div>
+        <div id="accountAuthSignedIn" class="hidden"></div>
+        <input type="hidden" id="accountEmailInput" />
+        <input type="hidden" id="accountPasswordInput" />
+        <button id="accountSignInBtn" type="button" class="hidden"></button>
+        <button id="accountSignUpBtn" type="button" class="hidden"></button>
+        <button id="accountGoogleBtn" type="button" class="hidden"></button>
+        <button id="accountGithubBtn" type="button" class="hidden"></button>
+        <button id="accountUpgradeBtn" type="button" class="hidden"></button>
+        <button id="accountManageBtn" type="button" class="hidden"></button>
+        <button id="accountRefreshBtn" type="button" class="hidden"></button>
+        <button id="accountSignOutBtn" type="button" class="hidden"></button>
+        <span id="accountBillingValue" class="hidden"></span>
+        <span id="accountPlanValue" class="hidden"></span>
+        <span id="accountUsageValue" class="hidden"></span>
+        <span id="accountPeriodEndValue" class="hidden"></span>
+        <span id="accountRuntimeValue" class="hidden"></span>
     </div>
 </div>

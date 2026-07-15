@@ -66,25 +66,14 @@ sidePanelProto.getSetupFlowState = async function getSetupFlowState() {
     setupComplete = paidSetupComplete;
   }
 
-  let setupButtonLabel = 'Pay or add your own key';
-  if (mode === ACCOUNT_MODE_BYOK && !setupComplete) {
-    setupButtonLabel = 'Finish provider setup';
-  } else if (mode === ACCOUNT_MODE_BYOK) {
-    setupButtonLabel = 'Provider ready';
+  let setupButtonLabel = 'Connect Grok';
+  if (setupComplete || byokReady) {
+    setupButtonLabel = 'Grok ready';
+  } else if (mode === ACCOUNT_MODE_BYOK && !setupComplete) {
+    setupButtonLabel = 'Connect Grok';
   } else if (mode === ACCOUNT_MODE_PAID && !setupComplete) {
-    if (!hasConvexUrl) {
-      setupButtonLabel = 'Reconnect paid backend';
-    } else if (!signedInPaid) {
-      setupButtonLabel = 'Sign in to paid mode';
-    } else if (!hasPaidModelConfigured) {
-      setupButtonLabel = 'Set paid model';
-    } else if (!paidAccess) {
-      setupButtonLabel = 'Start billing';
-    } else {
-      setupButtonLabel = 'Finish paid setup';
-    }
-  } else if (mode === ACCOUNT_MODE_PAID) {
-    setupButtonLabel = runtimeStatus?.level === 'error' ? 'Review paid runtime issue' : 'Parchi managed ready';
+    // Managed path deprecated — always steer to Grok connect.
+    setupButtonLabel = 'Connect Grok';
   }
 
   let paidStatusLabel = 'Paid: unavailable';

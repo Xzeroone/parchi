@@ -191,6 +191,7 @@ sidePanelProto.startOAuthConnect = async function startOAuthConnect(key: OAuthPr
     // appear immediately, rather than waiting for the TTL to expire.
     void this.refreshModelCatalog?.({ force: true });
     this.renderOAuthProviderGrid();
+    void this.refreshAccountPanel?.({ silent: true });
   } catch (error) {
     setHidden(document.getElementById('oauthDeviceCodePrompt'), true);
     const message = error instanceof Error ? error.message : String(error);
@@ -209,6 +210,7 @@ sidePanelProto.startOAuthDisconnect = async function startOAuthDisconnect(key: O
   // Force-refresh so the disconnected provider's stale models don't linger.
   void this.refreshModelCatalog?.({ force: true });
   this.renderOAuthProviderGrid();
+  void this.refreshAccountPanel?.({ silent: true });
 };
 
 sidePanelProto.showDeviceCodePrompt = function showDeviceCodePrompt(
