@@ -15,7 +15,7 @@ import { runBrowserCspFieldReportSuite } from './suites/browser-csp-field-report
 import { runBrowserCspHardeningSuite } from './suites/browser-csp-hardening.test.js';
 import { runBrowserDebugFirefoxGuardSuite } from './suites/browser-debug-firefox-guard.test.js';
 import { runBrowserEvalSerializationSuite } from './suites/browser-eval-serialization.test.js';
-import { runCodexOauthConfigSuite } from './suites/codex-oauth-config.test.js';
+import { runXaiOauthConfigSuite } from './suites/codex-oauth-config.test.js';
 import { runConversationCompactionSuite } from './suites/conversation-compaction.test.js';
 import { runErrorHandlingSuite } from './suites/error-handling.test.js';
 import { runInputValidationSuite } from './suites/input-validation.test.js';
@@ -83,7 +83,7 @@ export async function runUnitTests() {
   await runOauthProfileContextSyncSuite(runner);
   await runOauthCandidatesSuite(runner);
   await runRuntimeProfileRoutingSuite(runner);
-  await runCodexOauthConfigSuite(runner);
+  await runXaiOauthConfigSuite(runner);
   await runMessageSchemaSuite(runner);
   await runModelMessageConvertSuite(runner);
   await runConversationCompactionSuite(runner);

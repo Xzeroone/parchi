@@ -81,9 +81,7 @@ export async function prepareAgentLoopRun(
   );
   const oauthProviderKey = resolveOauthProviderKey(orchestratorProfile.provider || '');
   const requestedModelFamily = inferModelFamilyFromId(String(orchestratorProfile.model || settings.model || ''));
-  const openRouterLikeProvider = ['openrouter', 'parchi'].includes(
-    String(orchestratorProfile.provider || '').toLowerCase(),
-  );
+  const openRouterLikeProvider = ['openrouter'].includes(String(orchestratorProfile.provider || '').toLowerCase());
 
   const modelConfig = buildModelConfig(
     orchestratorProfile,
@@ -136,7 +134,7 @@ async function loadAgentSettings(): Promise<AgentSettings> {
 
 function buildModelRetryOrder(activeModelId: string, provider: string): string[] {
   const order = [activeModelId];
-  if (['openrouter', 'parchi'].includes(provider.toLowerCase())) {
+  if (['openrouter'].includes(provider.toLowerCase())) {
     if (!order.includes('openrouter/auto')) order.push('openrouter/auto');
     if (!order.includes('openai/gpt-4o-mini')) order.push('openai/gpt-4o-mini');
   }

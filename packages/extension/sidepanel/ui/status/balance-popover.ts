@@ -52,7 +52,7 @@ sidePanelProto.toggleBalancePopover = async function toggleBalancePopover() {
       .trim()
       .toLowerCase();
     if (spendEl) {
-      if (provider === 'parchi' || provider === 'openrouter') {
+      if (provider === 'openrouter') {
         spendEl.textContent = 'See Account tab';
       } else {
         spendEl.textContent = 'BYOK (no billing)';

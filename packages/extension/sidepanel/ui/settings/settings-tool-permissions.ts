@@ -30,7 +30,7 @@ sidePanelProto.updateScreenshotToggleState = function updateScreenshotToggleStat
   const wantsScreens = activeProfile.enableScreenshots !== false;
   const visionProfile = this.elements.visionProfile?.value;
   const provider = activeProfile.provider;
-  const hasVision = (provider && provider !== 'custom') || visionProfile;
+  const hasVision = Boolean(provider) || visionProfile;
   const controls: Array<any> = [];
   controls.forEach((ctrl) => {
     if (!ctrl) return;

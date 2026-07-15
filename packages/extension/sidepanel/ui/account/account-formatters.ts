@@ -59,7 +59,7 @@ export const isManagedProvider = (provider: unknown) => {
   const normalized = String(provider || '')
     .trim()
     .toLowerCase();
-  return normalized === 'parchi' || normalized === 'openrouter';
+  return normalized === 'openrouter';
 };
 
 export const updateStatusCopy = (ui: any, text: string) => {

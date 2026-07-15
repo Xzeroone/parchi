@@ -62,7 +62,7 @@ sidePanelProto.validateProfileEditorHeaders = function validateProfileEditorHead
 
 sidePanelProto.toggleCustomEndpoint = function toggleCustomEndpoint() {
   const provider = this.elements.provider?.value;
-  const isCustom = provider === 'custom' || provider === 'kimi' || provider === 'openrouter';
+  const isCustom = provider === 'kimi' || provider === 'openrouter';
 
   if (this.elements.customEndpointGroup) {
     this.elements.customEndpointGroup.classList.toggle('required', isCustom);
@@ -92,9 +92,6 @@ sidePanelProto.toggleCustomEndpoint = function toggleCustomEndpoint() {
   const modelHint = document.getElementById('modelHint');
   if (modelHint) {
     switch (provider) {
-      case 'parchi':
-        modelHint.textContent = 'Managed routing via Stripe billing. Default: moonshotai/kimi-k2.5.';
-        break;
       case 'anthropic':
         modelHint.textContent = 'Recommended: claude-sonnet-4-20250514';
         break;
@@ -107,9 +104,6 @@ sidePanelProto.toggleCustomEndpoint = function toggleCustomEndpoint() {
       case 'openrouter':
         modelHint.textContent = 'e.g. anthropic/claude-sonnet-4, openai/gpt-4o, google/gemini-2.0-flash';
         break;
-      case 'custom':
-        modelHint.textContent = 'Enter the model ID from your provider';
-        break;
       default:
         modelHint.textContent = '';
     }
@@ -120,5 +114,5 @@ sidePanelProto.toggleProfileEditorEndpoint = function toggleProfileEditorEndpoin
   if (!this.elements.profileEditorEndpointGroup) return;
   const provider = this.elements.profileEditorProvider?.value;
   this.elements.profileEditorEndpointGroup.style.display =
-    provider === 'custom' || provider === 'kimi' || provider === 'openrouter' ? 'block' : 'none';
+    provider === 'kimi' || provider === 'openrouter' ? 'block' : 'none';
 };

@@ -71,8 +71,8 @@ const DEFAULT_ENABLED_PREFIXES = [
 ];
 
 function isDefaultEnabled(modelId: string, providerType: string): boolean {
-  // All custom provider models enabled
-  if (providerType === 'custom') return true;
+  // All openrouter provider models enabled
+  if (providerType === 'openrouter') return true;
   const lower = modelId.toLowerCase();
   return DEFAULT_ENABLED_PREFIXES.some((p) => lower.startsWith(p.toLowerCase()));
 }

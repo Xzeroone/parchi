@@ -110,7 +110,7 @@ export function applyConvexProxyProfile(profile: Record<string, any>, settings: 
       ? 'kimi'
       : profile?.provider === 'anthropic' || profile?.provider === 'glm' || profile?.provider === 'minimax'
         ? 'anthropic'
-        : profile?.provider === 'openrouter' || profile?.provider === 'parchi'
+        : profile?.provider === 'openrouter'
           ? 'openrouter'
           : 'openai';
   const requestedModel = String(profile?.model || settings.model || '').trim();

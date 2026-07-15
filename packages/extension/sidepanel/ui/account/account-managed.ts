@@ -40,8 +40,7 @@ sidePanelProto.ensureManagedProviderDefaults = async function ensureManagedProvi
   const activeProvider = String(activeProfile.provider || '')
     .trim()
     .toLowerCase();
-  const activeModelCandidate =
-    activeProvider === 'openrouter' || activeProvider === 'parchi' ? String(activeProfile.model || '').trim() : '';
+  const activeModelCandidate = activeProvider === 'openrouter' ? String(activeProfile.model || '').trim() : '';
   const existingManagedModel = String(existingManaged.model || '').trim();
   const prefersLegacyManagedDefault = existingManagedModel === 'openai/gpt-4o-mini';
   const resolvedModel = String(
@@ -53,14 +52,14 @@ sidePanelProto.ensureManagedProviderDefaults = async function ensureManagedProvi
   const managedProviderId =
     String(existingManaged.providerId || '') ||
     buildProviderInstanceId({
-      provider: 'parchi',
+      provider: 'openrouter',
       authType: 'managed',
       name: 'Parchi Managed',
     });
   providers[managedProviderId] = {
     id: managedProviderId,
     name: 'Parchi Managed',
-    provider: 'parchi',
+    provider: 'openrouter',
     authType: 'managed',
     isConnected: true,
     models: [{ id: normalizeManagedModelId(resolvedModel), label: normalizeManagedModelId(resolvedModel) }],
@@ -74,7 +73,7 @@ sidePanelProto.ensureManagedProviderDefaults = async function ensureManagedProvi
     providerId: managedProviderId,
     modelId: normalizeManagedModelId(resolvedModel),
     providerLabel: 'Parchi Managed',
-    provider: 'parchi',
+    provider: 'openrouter',
     apiKey: '',
     model: normalizeManagedModelId(resolvedModel),
   };
@@ -104,7 +103,7 @@ sidePanelProto.ensureManagedProviderDefaults = async function ensureManagedProvi
     ...providers,
   };
   if (this.configs[MANAGED_PROFILE_NAME]) {
-    this.configs[MANAGED_PROFILE_NAME].provider = 'parchi';
+    this.configs[MANAGED_PROFILE_NAME].provider = 'openrouter';
     this.configs[MANAGED_PROFILE_NAME].apiKey = '';
     this.configs[MANAGED_PROFILE_NAME].model = managedProfile.model;
   }

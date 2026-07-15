@@ -3,11 +3,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { resolveOAuthProvider } from './provider-oauth.js';
 import { resolveProxyProvider } from './provider-proxy.js';
-import {
-  resolveAnthropicCompatibleProvider,
-  resolveCustomProvider,
-  resolveOpenRouterProvider,
-} from './provider-standard.js';
+import { resolveAnthropicCompatibleProvider, resolveOpenRouterProvider } from './provider-standard.js';
 import type { SDKModelSettings } from './provider-types.js';
 
 export function resolveLanguageModel(settings: SDKModelSettings) {
@@ -33,16 +29,12 @@ export function resolveLanguageModel(settings: SDKModelSettings) {
     return resolveAnthropicCompatibleProvider(provider, settings, apiKey, extraHeaders, modelId);
   }
 
-  if (provider === 'openrouter' || provider === 'parchi') {
+  if (provider === 'openrouter') {
     return resolveOpenRouterProvider(provider, apiKey, extraHeaders, modelId);
   }
 
   if (provider.endsWith('-oauth')) {
     return resolveOAuthProvider(provider, settings, extraHeaders, modelId);
-  }
-
-  if (provider === 'custom') {
-    return resolveCustomProvider(settings, apiKey, extraHeaders, modelId);
   }
 
   return createOpenAI({ apiKey, headers: extraHeaders })(modelId);

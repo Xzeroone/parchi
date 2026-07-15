@@ -29,11 +29,9 @@ export const normalizeProviderInstance = (value: unknown): ProviderInstance | nu
 
   const authType: ProviderInstance['authType'] = providerType.endsWith('-oauth')
     ? 'oauth'
-    : providerType === 'parchi'
-      ? 'managed'
-      : provider.authType === 'oauth' || provider.authType === 'managed'
-        ? provider.authType
-        : 'api-key';
+    : provider.authType === 'oauth' || provider.authType === 'managed'
+      ? provider.authType
+      : 'api-key';
   const apiKey = asString(provider.apiKey);
   const providerRecord = provider as unknown as Record<string, unknown>;
   const fallbackModelId = asString(providerRecord.modelId || providerRecord.model);
@@ -68,11 +66,7 @@ export const buildProviderFromProfile = (
   existingProviders: Record<string, ProviderInstance>,
 ) => {
   const providerType = normalizeProviderType(profile.provider);
-  const authType: ProviderInstance['authType'] = providerType.endsWith('-oauth')
-    ? 'oauth'
-    : providerType === 'parchi'
-      ? 'managed'
-      : 'api-key';
+  const authType: ProviderInstance['authType'] = providerType.endsWith('-oauth') ? 'oauth' : 'api-key';
   const oauthProviderKey = authType === 'oauth' ? (providerType.replace(/-oauth$/, '') as OAuthProviderKey) : undefined;
   const providerName =
     asString(profile.providerLabel) ||
@@ -109,7 +103,7 @@ export const buildProviderFromProfile = (
     oauthProviderKey,
     oauthEmail: prior?.oauthEmail,
     oauthError: prior?.oauthError,
-    isConnected: authType === 'oauth' ? prior?.isConnected === true : authType === 'managed' ? true : Boolean(apiKey),
+    isConnected: authType === 'oauth' ? prior?.isConnected === true : Boolean(apiKey),
     models,
     supportsImages: prior?.supportsImages ?? profile.supportsImages ?? undefined,
     createdAt: Number(prior?.createdAt || now),

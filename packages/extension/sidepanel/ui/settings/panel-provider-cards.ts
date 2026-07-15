@@ -13,11 +13,11 @@ import {
 } from '../../../state/provider-registry.js';
 import { SidePanelUI } from '../core/panel-ui.js';
 
-const sidePanelProto = SidePanelUI.prototype as SidePanelUI & Record<string, unknown>;
-
 import { getProviderSvg } from './panel-model-selector.js';
 
-const apiProviderPresets = () => getApiKeyProviders().filter((provider) => provider.key !== 'parchi');
+const sidePanelProto = SidePanelUI.prototype as SidePanelUI & Record<string, unknown>;
+
+const apiProviderPresets = () => getApiKeyProviders();
 
 const providerSummary = (provider: ProviderInstance) => {
   if (provider.authType === 'managed') return 'Managed';
@@ -104,14 +104,7 @@ sidePanelProto.openProviderEditor = function openProviderEditor(providerKeyOrId:
     this.elements.providerEditorEndpoint.placeholder = def.defaultBaseUrl || 'https://...';
   }
   if (this.elements.providerEditorEndpointGroup) {
-    this.elements.providerEditorEndpointGroup.style.display =
-      providerType === 'custom' ||
-      providerType === 'kimi' ||
-      providerType === 'openrouter' ||
-      providerType === 'glm' ||
-      providerType === 'minimax'
-        ? ''
-        : 'none';
+    this.elements.providerEditorEndpointGroup.style.display = providerType === 'xai-oauth' ? '' : 'none';
   }
 };
 

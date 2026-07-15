@@ -107,7 +107,7 @@ export async function resolveAgentProfiles(
 
 export function buildModelRetryOrder(activeModelId: string, provider: string): string[] {
   const modelRetryOrder = [activeModelId];
-  const openRouterLikeProvider = ['openrouter', 'parchi'].includes(String(provider).toLowerCase());
+  const openRouterLikeProvider = ['openrouter'].includes(String(provider).toLowerCase());
   if (openRouterLikeProvider) {
     if (!modelRetryOrder.includes('openrouter/auto')) modelRetryOrder.push('openrouter/auto');
     if (!modelRetryOrder.includes('openai/gpt-4o-mini')) modelRetryOrder.push('openai/gpt-4o-mini');

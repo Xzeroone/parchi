@@ -66,8 +66,7 @@ export function shouldEnableAnthropicThinking(showThinking: boolean, orchestrato
     showThinking &&
     (orchestratorProfile.provider === 'anthropic' ||
       orchestratorProfile.provider === 'kimi' ||
-      ((orchestratorProfile.provider === 'openrouter' || orchestratorProfile.provider === 'parchi') &&
-        /claude/i.test(orchestratorProfile.model || '')))
+      (orchestratorProfile.provider === 'openrouter' && /claude/i.test(orchestratorProfile.model || '')))
   );
 }
 

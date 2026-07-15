@@ -312,7 +312,7 @@ sidePanelProto.updateModelSelectorGlow = function updateModelSelectorGlow() {
   const provider = String(activeConfig?.provider || '')
     .trim()
     .toLowerCase();
-  const isParchi = provider === 'parchi' || provider === 'openrouter';
+  const isParchi = provider === 'openrouter';
   wrap.classList.toggle('parchi-glow', isParchi);
 };
 

@@ -20,7 +20,7 @@ export const normalizeHeaders = (value: unknown): Record<string, string> => {
 export const normalizeEndpointBase = (provider: string, customEndpoint: string) => {
   const raw = String(customEndpoint || '').trim();
   const fallback =
-    provider === 'openrouter' || provider === 'parchi'
+    provider === 'openrouter'
       ? OPENROUTER_BASE_URL
       : provider === 'glm'
         ? 'https://api.z.ai/api/anthropic'

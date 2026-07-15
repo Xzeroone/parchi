@@ -1,10 +1,4 @@
-import { refreshAuthCodeTokens, runAuthCodePkceFlow } from './flow-auth-code.js';
-import {
-  type DeviceCodeFlowCallbacks,
-  refreshCopilotToken,
-  refreshQwenToken,
-  runDeviceCodeFlow,
-} from './flow-device-code.js';
+import { type DeviceCodeFlowCallbacks, refreshQwenToken, runDeviceCodeFlow } from './flow-device-code.js';
 import { OAUTH_PROVIDERS } from './providers.js';
 import {
   disconnectProvider,
@@ -17,12 +11,8 @@ import type { DeviceCodeResponse, OAuthProviderKey, OAuthProviderState, OAuthTok
 
 import { prioritizeOAuthModelCandidates } from './model-candidates.js';
 import {
-  fetchAnthropicModels,
-  fetchCodexModels,
-  fetchCopilotModels,
   fetchOpenAICompatibleModelEntries,
   fetchOpenAICompatibleModels,
-  fetchOpenAIModels,
   getStaticOAuthModelIds,
 } from './model-listing.js';
 import { normalizeOAuthModelIdsForProvider } from './model-normalization.js';
@@ -57,14 +47,11 @@ export async function connectProvider(
   try {
     let tokens: OAuthTokenSet;
 
-    if (config.flowType === 'authorization_code_pkce') {
-      tokens = await runAuthCodePkceFlow(config, controller.signal);
-    } else {
-      const deviceCallbacks: DeviceCodeFlowCallbacks = {
-        onDeviceCode: (response) => callbacks?.onDeviceCode?.(response),
-      };
-      tokens = await runDeviceCodeFlow(config, deviceCallbacks, controller.signal);
-    }
+    // xAI uses device_code flow
+    const deviceCallbacks: DeviceCodeFlowCallbacks = {
+      onDeviceCode: (response) => callbacks?.onDeviceCode?.(response),
+    };
+    tokens = await runDeviceCodeFlow(config, deviceCallbacks, controller.signal);
 
     await saveProviderTokens(key, tokens);
     return tokens;
@@ -110,32 +97,13 @@ export async function getAccessToken(key: OAuthProviderKey): Promise<string | nu
     const config = OAUTH_PROVIDERS[key];
     if (!config) return null;
 
-    if (key === 'copilot' && tokens.refreshToken) {
-      const refreshed = await refreshCopilotToken(tokens.refreshToken);
-      await updateProviderTokens(key, {
-        accessToken: refreshed.accessToken,
-        expiresAt: refreshed.expiresAt,
-      });
-      return refreshed.accessToken;
-    }
-
-    if (key === 'qwen' && tokens.refreshToken) {
+    if (key === 'xai' && tokens.refreshToken) {
       const refreshed = await refreshQwenToken(config, tokens.refreshToken);
       await updateProviderTokens(key, {
         accessToken: refreshed.accessToken,
         refreshToken: refreshed.refreshToken,
         expiresAt: refreshed.expiresAt,
         resourceUrl: refreshed.resourceUrl,
-      });
-      return refreshed.accessToken;
-    }
-
-    if ((key === 'claude' || key === 'codex') && tokens.refreshToken) {
-      const refreshed = await refreshAuthCodeTokens(config, tokens.refreshToken);
-      await updateProviderTokens(key, {
-        accessToken: refreshed.accessToken,
-        refreshToken: refreshed.refreshToken || tokens.refreshToken,
-        expiresAt: refreshed.expiresAt,
       });
       return refreshed.accessToken;
     }
@@ -150,17 +118,11 @@ export async function getAccessToken(key: OAuthProviderKey): Promise<string | nu
 }
 
 /**
- * Get the API base URL for a provider. Qwen uses a dynamic URL from the token response.
+ * Get the API base URL for a provider. xAI uses a static URL.
  */
 export async function getApiBaseUrl(key: OAuthProviderKey): Promise<string | null> {
   const config = OAUTH_PROVIDERS[key];
   if (!config) return null;
-
-  if (key === 'qwen') {
-    const state = await getProviderState(key);
-    return state?.tokens?.resourceUrl || config.apiBaseUrl || null;
-  }
-
   return config.apiBaseUrl || null;
 }
 
@@ -195,37 +157,7 @@ export async function fetchProviderModelsDetailed(key: OAuthProviderKey): Promis
   try {
     let models: string[] = [];
 
-    if (key === 'claude') {
-      models = await fetchAnthropicModels(accessToken, config.apiBaseUrl);
-    } else if (key === 'codex') {
-      models = await fetchCodexModels(accessToken, config.apiBaseUrl || 'https://chatgpt.com/backend-api/codex');
-      if (models.length === 0) {
-        models = await fetchOpenAIModels(accessToken);
-      }
-    } else if (key === 'copilot') {
-      models = await fetchCopilotModels(accessToken, config.apiBaseUrl, config.apiHeaders);
-      if (models.length === 0) {
-        const state = await getProviderState(key);
-        const refreshToken = state?.tokens?.refreshToken;
-        if (refreshToken) {
-          try {
-            const refreshed = await refreshCopilotToken(refreshToken);
-            await updateProviderTokens(key, {
-              accessToken: refreshed.accessToken,
-              expiresAt: refreshed.expiresAt,
-            });
-            models = await fetchCopilotModels(refreshed.accessToken, config.apiBaseUrl, config.apiHeaders);
-          } catch (refreshErr) {
-            console.warn('[OAuth] Copilot token refresh for model listing failed:', refreshErr);
-          }
-        }
-      }
-    } else if (key === 'qwen') {
-      const apiBase = await getApiBaseUrl(key);
-      if (apiBase) {
-        models = await fetchOpenAICompatibleModels(accessToken, apiBase);
-      }
-    } else if (key === 'xai') {
+    if (key === 'xai') {
       const apiBase = config.apiBaseUrl;
       if (apiBase) {
         const entries = await fetchOpenAICompatibleModelEntries(accessToken, apiBase);

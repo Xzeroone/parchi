@@ -62,7 +62,7 @@ sidePanelProto.applyModelSuggestions = function applyModelSuggestions() {
   }
 
   if (!this.elements.modelHint) return;
-  if (activeProvider === 'custom') {
+  if (activeProvider === 'openrouter') {
     this.elements.modelHint.textContent =
       providerModels.length > 0
         ? `Discovered ${providerModels.length} custom model${providerModels.length === 1 ? '' : 's'} from your endpoint.`

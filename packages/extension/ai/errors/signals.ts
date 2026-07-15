@@ -18,7 +18,7 @@ export function detectManagedRouteSignal(context: ManagedSignalInput, combined: 
   const contextSignalsManaged =
     context.route === 'proxy' ||
     context.useProxy === true ||
-    String(context.provider || '').toLowerCase() === 'parchi' ||
+    String(context.provider || '').toLowerCase() === 'openrouter' ||
     String(context.model || '')
       .toLowerCase()
       .startsWith('parchi/');

@@ -15,7 +15,7 @@ export function resolveProxyProvider(
     settings.proxyProvider ||
     (provider === 'anthropic' || provider === 'kimi' || provider === 'glm' || provider === 'minimax'
       ? 'anthropic'
-      : provider === 'openrouter' || provider === 'parchi'
+      : provider === 'openrouter'
         ? 'openrouter'
         : 'openai');
 

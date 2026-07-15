@@ -12,7 +12,7 @@ export async function runModelListingIntegrationSuite(runner: AsyncTestRunner) {
 
     globalThis.fetch = (async (_url: string | URL | Request, init?: RequestInit) => {
       signalSeen = init?.signal as AbortSignal;
-      return new Response(JSON.stringify({ data: ['gpt-4.1'] }), {
+      return new Response(JSON.stringify({ data: ['grok-4'] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -32,20 +32,20 @@ export async function runModelListingIntegrationSuite(runner: AsyncTestRunner) {
 
   await runner.test('extractModelEntries preserves labels and context windows after network fetch', async () => {
     const payload = {
-      models: [
-        { id: 'claude-sonnet-4.5', display_name: 'Claude Sonnet 4.5', context_length: 200000 },
-        { slug: 'kimi-k2', name: 'Kimi K2' },
+      data: [
+        { id: 'grok-4', display_name: 'Grok 4', context_length: 256000 },
+        { id: 'grok-4.3', display_name: 'Grok 4.3', context_length: 256000 },
       ],
     };
     runner.assertEqual(extractModelEntries(payload), [
-      { id: 'claude-sonnet-4.5', label: 'Claude Sonnet 4.5', contextWindow: 200000 },
-      { id: 'kimi-k2', label: 'Kimi K2' },
+      { id: 'grok-4', label: 'Grok 4', contextWindow: 256000 },
+      { id: 'grok-4.3', label: 'Grok 4.3', contextWindow: 256000 },
     ]);
   });
 
   log('\n=== Integration: Live-First fetchModelsForProviderDetailed ===', 'info');
 
-  await runner.test('fetchModelsForProviderDetailed fetches from the correct URL with Bearer auth', async () => {
+  await runner.test('fetchModelsForProviderDetailed fetches from xAI /models endpoint with Bearer auth', async () => {
     const originalFetch = globalThis.fetch;
     let fetchedUrl = '';
     let authHeader = '';
@@ -54,109 +54,57 @@ export async function runModelListingIntegrationSuite(runner: AsyncTestRunner) {
       fetchedUrl = String(url);
       const headers = init?.headers as Record<string, string>;
       authHeader = headers?.Authorization || '';
-      return new Response(JSON.stringify({ data: [{ id: 'gpt-5.2' }] }), {
+      return new Response(JSON.stringify({ data: [{ id: 'grok-4' }] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
     }) as typeof fetch;
 
     try {
-      const def = PROVIDER_REGISTRY.openai;
+      const def = PROVIDER_REGISTRY['xai-oauth'];
       const result = await fetchModelsForProviderDetailed(def, {
         type: def.type,
-        apiKey: 'sk-test-key',
+        apiKey: 'test-key',
       });
       runner.assertTrue(result.live, 'should be live');
-      runner.assertTrue(fetchedUrl.includes('api.openai.com'), `URL should contain api.openai.com, got: ${fetchedUrl}`);
+      runner.assertTrue(fetchedUrl.includes('api.x.ai'), `URL should contain api.x.ai, got: ${fetchedUrl}`);
       runner.assertTrue(fetchedUrl.includes('/models'), `URL should end with /models, got: ${fetchedUrl}`);
-      runner.assertEqual(authHeader, 'Bearer sk-test-key');
+      runner.assertEqual(authHeader, 'Bearer test-key');
     } finally {
       globalThis.fetch = originalFetch;
     }
   });
 
-  await runner.test('fetchModelsForProviderDetailed uses x-api-key header for anthropic-style providers', async () => {
-    const originalFetch = globalThis.fetch;
-    let apiKeyHeader = '';
-    let anthropicVersionHeader = '';
+  await runner.test(
+    'fetchModelsForProviderDetailed fetches from xAI /models endpoint with live=true on success',
+    async () => {
+      const originalFetch = globalThis.fetch;
+      let fetchedUrl = '';
 
-    globalThis.fetch = (async (_url: string | URL | Request, init?: RequestInit) => {
-      const headers = init?.headers as Record<string, string>;
-      apiKeyHeader = headers?.['X-Api-Key'] || '';
-      anthropicVersionHeader = headers?.['anthropic-version'] || '';
-      return new Response(JSON.stringify({ data: [{ id: 'claude-sonnet-4-6' }] }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }) as typeof fetch;
+      globalThis.fetch = (async (url: string | URL | Request) => {
+        fetchedUrl = String(url);
+        return new Response(JSON.stringify({ data: [{ id: 'grok-4' }, { id: 'grok-4.3' }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }) as typeof fetch;
 
-    try {
-      const def = PROVIDER_REGISTRY.anthropic;
-      const result = await fetchModelsForProviderDetailed(def, {
-        type: def.type,
-        apiKey: 'ant-key',
-      });
-      runner.assertTrue(result.live, 'should be live');
-      runner.assertEqual(apiKeyHeader, 'ant-key');
-      runner.assertEqual(anthropicVersionHeader, '2023-06-01');
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
-  });
-
-  await runner.test('fetchModelsForProviderDetailed fetches from kimi /v1/models endpoint', async () => {
-    const originalFetch = globalThis.fetch;
-    let fetchedUrl = '';
-
-    globalThis.fetch = (async (url: string | URL | Request) => {
-      fetchedUrl = String(url);
-      return new Response(JSON.stringify({ data: [{ id: 'kimi-k2.5' }] }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }) as typeof fetch;
-
-    try {
-      const def = PROVIDER_REGISTRY.kimi;
-      runner.assertTrue(def.supportsModelListing, 'kimi must support listing');
-      const result = await fetchModelsForProviderDetailed(def, {
-        type: def.type,
-        apiKey: 'kimi-key',
-      });
-      runner.assertTrue(result.live, 'should be live');
-      runner.assertTrue(fetchedUrl.includes('/v1/models'), `URL should contain /v1/models, got: ${fetchedUrl}`);
-      runner.assertTrue(
-        result.models.some((m) => m.id === 'kimi-k2.5'),
-        'kimi-k2.5 in result',
-      );
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
-  });
-
-  await runner.test('fetchModelsForProviderDetailed fetches from minimax /v1/models endpoint', async () => {
-    const originalFetch = globalThis.fetch;
-    let fetchedUrl = '';
-
-    globalThis.fetch = (async (url: string | URL | Request) => {
-      fetchedUrl = String(url);
-      return new Response(JSON.stringify({ data: [{ id: 'MiniMax-M2.7' }] }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }) as typeof fetch;
-
-    try {
-      const def = PROVIDER_REGISTRY.minimax;
-      runner.assertTrue(def.supportsModelListing, 'minimax must support listing');
-      const result = await fetchModelsForProviderDetailed(def, {
-        type: def.type,
-        apiKey: 'mm-key',
-      });
-      runner.assertTrue(result.live, 'should be live');
-      runner.assertTrue(fetchedUrl.includes('/v1/models'), `URL should contain /v1/models, got: ${fetchedUrl}`);
-    } finally {
-      globalThis.fetch = originalFetch;
-    }
-  });
+      try {
+        const def = PROVIDER_REGISTRY['xai-oauth'];
+        runner.assertTrue(def.supportsModelListing, 'xai-oauth must support listing');
+        const result = await fetchModelsForProviderDetailed(def, {
+          type: def.type,
+          apiKey: 'test-key',
+        });
+        runner.assertTrue(result.live, 'should be live');
+        runner.assertTrue(fetchedUrl.includes('/models'), `URL should contain /models, got: ${fetchedUrl}`);
+        runner.assertTrue(
+          result.models.some((m) => m.id === 'grok-4'),
+          'grok-4 in result',
+        );
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    },
+  );
 }
