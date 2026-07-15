@@ -29,14 +29,13 @@ export async function typeTool(ctx: BrowserToolsDelegate, args: BrowserToolArgs)
   });
 
   const spec = selector ? parseSelectorSpec(selector) : null;
-  const resolveSelectorSpecElementSrc = resolveSelectorSpecElement.toString();
-  let result = await ctx.runInTab(tabId, injectedType, [spec, text, timeoutMs, resolveSelectorSpecElementSrc] as const);
+  let result = await ctx.runInTab(tabId, injectedType, [spec, text, timeoutMs, resolveSelectorSpecElement] as const);
   if (isToolFailure(result) && result.error === 'Element not found.') {
     result = await ctx.runInAllFrames(tabId, injectedType, [
       spec,
       text,
       timeoutMs,
-      resolveSelectorSpecElementSrc,
+      resolveSelectorSpecElement,
     ] as const);
   }
 

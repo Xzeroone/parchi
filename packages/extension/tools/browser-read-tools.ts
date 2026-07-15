@@ -25,9 +25,6 @@ export async function evaluateTool(ctx: BrowserToolsDelegate, args: BrowserToolA
 
   const result = await ctx.runInTab(
     tabId,
-    // chrome.scripting.executeScript serializes `func` via Function.prototype.toString()
-    // and re-runs it with no closure — module-scope imports must be reconstructed from
-    // their own source, passed in as args, rather than referenced directly.
     async (source: string, runtimeArgs: unknown[], runPageScriptSrc: string, toJsonSafeSrc: string) => {
       try {
         const runPageScriptFn = new Function(`return (${runPageScriptSrc});`)() as (
@@ -41,9 +38,15 @@ export async function evaluateTool(ctx: BrowserToolsDelegate, args: BrowserToolA
           result: toJsonSafeFn(value),
         };
       } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        const isCsp = msg.toLowerCase().includes('csp') || msg.includes('unsafe-eval') || msg.includes('eval');
         return {
           success: false,
-          error: error instanceof Error ? error.message : String(error),
+          error: msg,
+          code: isCsp ? 'csp_blocked' : 'executeScript_failed',
+          hint: isCsp
+            ? 'Script evaluation blocked by page CSP. Use getContent, waitFor(selector|text), or screenshot instead.'
+            : undefined,
         };
       }
     },

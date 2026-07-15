@@ -13,12 +13,11 @@ export const injectedType = async (
   spec: SelectorSpec | null,
   value: string,
   waitMs: number,
-  resolveSelectorSpecElementSrc: string,
+  resolveElementFn: (
+    selectorSpec: Parameters<typeof ResolveSelectorSpecElement>[0],
+    allowDeepSearch: boolean,
+  ) => ReturnType<typeof ResolveSelectorSpecElement>,
 ): Promise<InjectedTypeResult> => {
-  const resolveElement = new Function(
-    `return (${resolveSelectorSpecElementSrc});`,
-  )() as typeof ResolveSelectorSpecElement;
-
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   const pollIntervalMs = 200;
 
@@ -64,7 +63,7 @@ export const injectedType = async (
       const now = performance.now();
       const allowDeepSearch = now - lastDeepQueryAt >= deepQueryMinIntervalMs;
       if (allowDeepSearch) lastDeepQueryAt = now;
-      const resolved = resolveElement(spec, allowDeepSearch);
+      const resolved = resolveElementFn(spec, allowDeepSearch);
       if (resolved.error === 'Invalid selector.') {
         return { success: false, error: `${resolved.error} ${resolved.hint || ''}`.trim() };
       }

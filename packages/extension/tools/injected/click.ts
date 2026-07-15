@@ -1,8 +1,5 @@
 import type { SelectorSpec } from '../selector-spec.js';
-import type {
-  dispatchSyntheticClick as DispatchSyntheticClick,
-  resolveSelectorSpecElement as ResolveSelectorSpecElement,
-} from './shared.js';
+import type { resolveSelectorSpecElement as ResolveSelectorSpecElement } from './shared.js';
 
 export type InjectedClickResult =
   | {
@@ -21,16 +18,17 @@ export type InjectedClickResult =
 export const injectedClick = async (
   spec: SelectorSpec,
   waitMs: number,
-  dispatchSyntheticClickSrc: string,
-  resolveSelectorSpecElementSrc: string,
+  dispatchSyntheticClickFn: (
+    target: Element,
+    clientX: number,
+    clientY: number,
+    options?: { button?: 0 | 1 | 2; doubleClick?: boolean; contextMenu?: boolean },
+  ) => void,
+  resolveElementFn: (
+    selectorSpec: Parameters<typeof ResolveSelectorSpecElement>[0],
+    allowDeepSearch: boolean,
+  ) => ReturnType<typeof ResolveSelectorSpecElement>,
 ): Promise<InjectedClickResult> => {
-  const dispatchSyntheticClick = new Function(
-    `return (${dispatchSyntheticClickSrc});`,
-  )() as typeof DispatchSyntheticClick;
-  const resolveElement = new Function(
-    `return (${resolveSelectorSpecElementSrc});`,
-  )() as typeof ResolveSelectorSpecElement;
-
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
   const pollIntervalMs = 200;
   const deepQueryMinIntervalMs = 700;
@@ -48,7 +46,7 @@ export const injectedClick = async (
     const top = document.elementFromPoint(cx, cy) as HTMLElement | null;
     const target = top && (top === el || el.contains(top)) ? top : el;
 
-    dispatchSyntheticClick(target, cx, cy);
+    dispatchSyntheticClickFn(target, cx, cy);
     return { success: true as const };
   };
 
@@ -59,7 +57,7 @@ export const injectedClick = async (
     const allowDeepSearch = now - lastDeepQueryAt >= deepQueryMinIntervalMs;
     if (allowDeepSearch) lastDeepQueryAt = now;
 
-    const resolved = resolveElement(spec, allowDeepSearch);
+    const resolved = resolveElementFn(spec as Parameters<typeof ResolveSelectorSpecElement>[0], allowDeepSearch);
     if (resolved.el) {
       const result = clickElement(resolved.el);
       return { ...result, strategy: resolved.strategy, candidates: resolved.candidates };
@@ -68,7 +66,7 @@ export const injectedClick = async (
     await sleep(pollIntervalMs);
   }
 
-  const resolved = resolveElement(spec, true);
+  const resolved = resolveElementFn(spec as Parameters<typeof ResolveSelectorSpecElement>[0], true);
   if (resolved.el) {
     const result = clickElement(resolved.el);
     return { ...result, strategy: resolved.strategy, candidates: resolved.candidates };

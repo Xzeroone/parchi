@@ -23,6 +23,8 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
     return {
       success: false,
       error: 'Provide at least one of selector, text, or script.',
+      code: 'invalid_args',
+      hint: 'Use selector (CSS), text (page text), or script (JS expression).',
     };
   }
   if (script.length > EVALUATE_TOOL_MAX_SCRIPT_LENGTH) {
@@ -60,13 +62,26 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
       pollMs: number,
       runPageScriptSrc: string,
     ) => {
-      const runPageScriptFn = new Function(`return (${runPageScriptSrc});`)() as (
-        s: string,
-        a: unknown[],
-      ) => Promise<unknown>;
       const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
       const startedAt = Date.now();
       let attempts = 0;
+
+      let runPageScriptFn: ((s: string, a: unknown[]) => Promise<unknown>) | null = null;
+      if (source) {
+        try {
+          runPageScriptFn = new Function(`return (${runPageScriptSrc});`)() as (
+            s: string,
+            a: unknown[],
+          ) => Promise<unknown>;
+        } catch (error) {
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+            code: 'csp_blocked',
+            hint: 'Script condition blocked by page CSP. Use selector or text instead.',
+          };
+        }
+      }
 
       const check = async () => {
         let element: Element | null = null;
@@ -95,6 +110,17 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
         }
 
         if (source) {
+          if (!runPageScriptFn) {
+            return {
+              done: true,
+              result: {
+                success: false,
+                error: 'Script execution blocked.',
+                code: 'csp_blocked',
+                hint: 'Script condition blocked by page CSP. Use selector or text instead.',
+              },
+            };
+          }
           try {
             if (!(await runPageScriptFn(source, runtimeArgs))) {
               return { done: false };
@@ -105,6 +131,8 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
               result: {
                 success: false,
                 error: error instanceof Error ? error.message : String(error),
+                code: 'csp_blocked',
+                hint: 'Script condition blocked by page CSP. Use selector or text instead.',
               },
             };
           }

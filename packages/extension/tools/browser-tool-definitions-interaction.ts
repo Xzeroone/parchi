@@ -4,7 +4,8 @@ import type { ToolDefinition } from '@parchi/shared';
 export const INTERACTION_TOOLS = [
   {
     name: 'click',
-    description: 'Click an element by selector. Supports CSS, text selectors like `text=Create note`.',
+    description:
+      'Click an element by selector. Supports CSS, text selectors like `text=Create note`. Uses a non-script injection path that works on CSP-strict pages. If the element is not found, falls back to searching all frames.',
     input_schema: {
       type: 'object',
       properties: {
@@ -18,7 +19,7 @@ export const INTERACTION_TOOLS = [
   {
     name: 'clickAt',
     description:
-      'Click at exact viewport coordinates (x, y). Use when selectors fail. Coordinates are CSS/viewport pixels (as in getBoundingClientRect), not device pixels — do not pass raw screenshot pixel coordinates on a display with devicePixelRatio != 1.',
+      'Click at exact viewport coordinates (x, y). Use when selectors fail. Coordinates are CSS/viewport pixels (as in getBoundingClientRect), not device pixels — do not pass raw screenshot pixel coordinates on a display with devicePixelRatio != 1. CSP-safe — works on strict-CSP pages where evaluate-based interaction would fail.',
     input_schema: {
       type: 'object',
       properties: {
