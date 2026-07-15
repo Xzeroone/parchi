@@ -78,7 +78,11 @@ export const PROVIDER_REGISTRY: Record<string, ProviderDefinition> = {
     sdkType: 'anthropic',
     defaultBaseUrl: 'https://api.kimi.com/coding/v1',
     authHeaderStyle: 'x-api-key',
-    supportsModelListing: false,
+    // Kimi exposes an Anthropic-compatible /v1/models endpoint. Static list
+    // below is kept as a fallback for when the API is unreachable or the key
+    // has not been saved yet.
+    supportsModelListing: true,
+    modelsEndpoint: '/v1/models',
     proxyProvider: 'kimi',
     normalizeBaseUrl: normalizeAnthropicBaseUrl,
     models: [
@@ -118,7 +122,11 @@ export const PROVIDER_REGISTRY: Record<string, ProviderDefinition> = {
     sdkType: 'anthropic',
     defaultBaseUrl: 'https://api.minimax.io/anthropic',
     authHeaderStyle: 'bearer',
-    supportsModelListing: false,
+    // MiniMax exposes an Anthropic-compatible /v1/models endpoint. Static
+    // list below is kept as a fallback for when the API is unreachable or the
+    // key has not been saved yet.
+    supportsModelListing: true,
+    modelsEndpoint: '/v1/models',
     normalizeBaseUrl: normalizeAnthropicBaseUrl,
     models: [
       { id: 'MiniMax-M2.7', label: 'MiniMax M2.7', contextWindow: 1000000 },

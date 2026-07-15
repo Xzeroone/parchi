@@ -1,6 +1,6 @@
 // Model profile editor - catalog fetching for profile editor UI
 
-import { fetchProviderModels } from '../../../oauth/manager.js';
+import { fetchProviderModelsDetailed } from '../../../oauth/manager.js';
 import type { OAuthProviderKey } from '../../../oauth/types.js';
 import {
   ensureProviderModel,
@@ -53,7 +53,7 @@ sidePanelProto.refreshModelCatalogForProfileEditor = async function refreshModel
       modelSelect.appendChild(loadingOpt);
     }
     try {
-      const modelIds = await fetchProviderModels(baseKey);
+      const { models: modelIds } = await fetchProviderModelsDetailed(baseKey);
       this._profileEditorModels = modelIds.sort((a: string, b: string) => a.localeCompare(b));
       if (providerInstance && modelIds.length > 0) {
         let nextProvider = providerInstance;

@@ -1,6 +1,10 @@
 import type { ProviderInstance } from '@parchi/shared';
-import { PROVIDER_REGISTRY, fetchModelsForProvider, getApiKeyProviders } from '../../../ai/providers/registry.js';
-import { mergeProviderModels } from '../../../state/provider-models.js';
+import {
+  PROVIDER_REGISTRY,
+  fetchModelsForProviderDetailed,
+  getApiKeyProviders,
+} from '../../../ai/providers/registry.js';
+import { mergeProviderModelsWithOptions } from '../../../state/provider-models.js';
 import {
   buildProviderInstanceId,
   ensureProviderModel,
@@ -182,11 +186,19 @@ sidePanelProto.saveProviderEditorConfig = function saveProviderEditorConfig() {
   if (def.supportsModelListing && apiKey) {
     void (async () => {
       try {
-        const fetched = await fetchModelsForProvider(def, { type: def.type, apiKey, customEndpoint: endpoint });
+        const { models: fetched, live } = await fetchModelsForProviderDetailed(def, {
+          type: def.type,
+          apiKey,
+          customEndpoint: endpoint,
+        });
         if (fetched.length > 0) {
           const updated = {
             ...this.providers[provider.id],
-            models: mergeProviderModels(provider.provider, this.providers[provider.id]?.models || [], fetched),
+            models: mergeProviderModelsWithOptions(
+              provider.provider,
+              [this.providers[provider.id]?.models || [], fetched],
+              { liveSourcePresent: live },
+            ),
             updatedAt: Date.now(),
           };
           this.providers = { ...(this.providers || {}), [provider.id]: updated };

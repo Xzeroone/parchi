@@ -7,7 +7,8 @@ export {
   getOAuthProviders,
   getProviderDefinition,
 } from './definitions.js';
-export { fetchModelsForProvider } from './fetch.js';
+export { fetchModelsForProvider, fetchModelsForProviderDetailed } from './fetch.js';
+export type { FetchedModelsResult } from './fetch.js';
 export { resolveProviderSdk } from './resolve.js';
 export { resolveModelCapabilities } from './model-capabilities.js';
 export type { ModelCapabilities } from './model-capabilities.js';
@@ -27,4 +28,5 @@ export {
   ensureProviderModel,
 } from './instance-registry.js';
 export { materializeProfileWithProvider, migrateSettingsToProviderRegistry } from './instance-migrate.js';
-export { normalizeProviderModels, mergeProviderModels } from './instance-models.js';
+export { normalizeProviderModels, mergeProviderModels, mergeProviderModelsWithOptions } from './instance-models.js';
+export type { MergeProviderModelsOptions } from './instance-models.js';
