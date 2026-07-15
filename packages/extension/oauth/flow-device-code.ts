@@ -110,20 +110,15 @@ async function pollForTokens(
     clearTimeout(timer);
     if (signal) signal.removeEventListener('abort', callerAbortListener);
 
-    // Some providers (e.g. Qwen) long-poll the token endpoint and their
-    // gateway returns 502/504 with an HTML body when it times out before
-    // the user authorises. Treat these as "authorization_pending" and
-    // retry on the next interval rather than crashing on response.json().
-    if (!response.ok) {
-      if (response.status === 502 || response.status === 504) {
-        continue;
-      }
-      const text = await response.text().catch(() => '');
-      throw new Error(`Token request failed (${response.status}): ${text}`);
+    // Read body for both 2xx and error statuses. xAI returns HTTP 400 with
+    // {"error":"authorization_pending"} while the user has not finished the
+    // device-code page yet — that must continue polling, not hard-fail.
+    // Qwen gateways may return 502/504 HTML while long-polling.
+    const rawBody = await response.text().catch(() => '');
+    if (!response.ok && (response.status === 502 || response.status === 504)) {
+      continue;
     }
 
-    // Guard against non-JSON responses (some gateways return HTML on errors).
-    const rawBody = await response.text();
     let data: {
       error?: string;
       error_description?: string;
@@ -132,15 +127,19 @@ async function pollForTokens(
       expires_in?: number;
       token_type?: string;
       resource_url?: string;
+      id_token?: string;
     };
     try {
       data = JSON.parse(rawBody) as typeof data;
     } catch {
-      // Non-JSON response — treat as transient and retry.
+      if (!response.ok) {
+        throw new Error(`Token request failed (${response.status}): ${rawBody.slice(0, 200)}`);
+      }
+      // Non-JSON success body — treat as transient and retry.
       continue;
     }
 
-    // GitHub returns 200 for both success and error in device flow
+    // OAuth device-flow errors may arrive as 200 (GitHub) or 400 (xAI).
     if (data.error) {
       if (data.error === 'authorization_pending') continue;
       if (data.error === 'slow_down') {
@@ -149,7 +148,12 @@ async function pollForTokens(
       }
       if (data.error === 'expired_token') throw new Error('Device code expired. Please try again.');
       if (data.error === 'access_denied') throw new Error('Access denied by user.');
-      throw new Error(`OAuth error: ${data.error} - ${data.error_description || ''}`);
+      const detail = data.error_description || data.error;
+      throw new Error(`OAuth error: ${detail}`);
+    }
+
+    if (!response.ok) {
+      throw new Error(`Token request failed (${response.status}): ${rawBody.slice(0, 200)}`);
     }
 
     if (data.access_token) {
