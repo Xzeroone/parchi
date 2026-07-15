@@ -20,6 +20,7 @@ import { runJsonRpcRequestSuite } from './suites/json-rpc/request.test.js';
 import { runJsonRpcResponseSuite } from './suites/json-rpc/response.test.js';
 import { runMessageSchemaSuite } from './suites/message-schema.test.js';
 import { runMessageUtilsSuite } from './suites/message-utils.test.js';
+import { runModelCapabilitiesSuite } from './suites/model-capabilities.test.js';
 import { runModelListingSuite } from './suites/model-listing.test.js';
 import { runModelMessageConvertSuite } from './suites/model-message-convert.test.js';
 import { runOauthCandidatesSuite } from './suites/oauth-candidates.test.js';
@@ -80,6 +81,7 @@ export function runUnitTests() {
   runThinkingExtractionSuite(runner);
   runMessageUtilsSuite(runner);
   runModelListingSuite(runner);
+  runModelCapabilitiesSuite(runner);
   runReportImagesSuite(runner);
   runRecordingSummarySuite(runner);
   runPanelSessionMemorySuite(runner);
