@@ -181,7 +181,7 @@
 .settings-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   min-height: 0;
   flex: 1;
   overflow-y: auto;
@@ -190,61 +190,84 @@
 
 .panel-header-with-actions {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: nowrap;
+  /* Stay single-row in narrow sidepanels — stacking caused full-width Account overlay */
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+}
+
+.panel-header-copy {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .panel-subtitle {
   display: block;
-  margin-top: 4px;
+  margin-top: 2px;
   font-size: 11px;
   color: var(--muted-dim);
 }
 
+/* Compact account chip — avatar only, no full-width stretch */
 .panel-avatar-button {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
   border: 1px solid var(--ink-2);
   border-radius: 999px;
   background: var(--card);
   color: var(--foreground);
   cursor: pointer;
+  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
+}
+
+.panel-avatar-button:hover {
+  border-color: var(--ink-3);
+  background: var(--card-hover);
 }
 
 .panel-avatar-initials {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: rgb(var(--accent-rgb) / 0.14);
   color: var(--accent-light);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
+  line-height: 1;
 }
 
 .panel-avatar-label {
-  font-size: 11px;
-  color: var(--muted);
+  display: none;
 }
 
 .panel-header-btn {
   flex-shrink: 0;
+  padding: 4px 10px;
+  font-size: 11px;
 }
 
 .settings-content-redesign {
-  gap: 14px;
+  gap: 10px;
 }
 
 .settings-tabs {
   display: flex;
-  gap: 3px;
-  margin-bottom: 8px;
-  padding: 4px;
+  gap: 2px;
+  margin-bottom: 4px;
+  padding: 3px;
   background: var(--background);
   border: 1px solid var(--ink-1);
   border-radius: var(--radius-sm);
@@ -256,9 +279,8 @@
   scrollbar-width: none;
   position: sticky;
   top: 0;
-  z-index: 4;
-  background: color-mix(in srgb, var(--background) 88%, transparent);
-  backdrop-filter: blur(10px);
+  z-index: 2;
+  background: var(--card);
 }
 
 .settings-tabs-redesign::-webkit-scrollbar {
@@ -267,8 +289,8 @@
 
 .settings-tab-button {
   flex-shrink: 0;
-  padding: 6px 7px;
-  font-size: 11.5px;
+  padding: 5px 8px;
+  font-size: 11px;
   font-weight: 550;
   letter-spacing: 0.01em;
   background: transparent;
@@ -336,10 +358,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 8px 10px;
   border: 1px solid var(--ink-1);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--background);
 }
 
@@ -508,12 +530,12 @@
 }
 
 .settings-section-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted-dim);
-  padding: 4px 0 2px;
+  padding: 2px 0 0;
 }
 
 .settings-divider {
@@ -659,13 +681,13 @@
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
   max-width: 100%;
 }
 
 .form-group label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--muted);
   word-wrap: break-word;
@@ -676,12 +698,12 @@
 .form-group input,
 .form-group select,
 .form-group textarea {
-  padding: 8px 10px;
+  padding: 6px 9px;
   background: var(--card);
   border: 1px solid var(--ink-1);
   border-radius: var(--radius-sm);
   color: var(--foreground);
-  font-size: 13px;
+  font-size: 12px;
   max-width: 100%;
   width: 100%;
   transition: all var(--duration-fast) ease;
@@ -1499,9 +1521,9 @@ input[type="range"]::-webkit-slider-thumb {
     grid-template-columns: 1fr;
   }
 
+  /* Keep panel headers single-row; only stretch multi-line intro/action cards */
   .settings-intro-card,
-  .profile-actions-row-redesign,
-  .panel-header-with-actions {
+  .profile-actions-row-redesign {
     flex-direction: column;
     align-items: stretch;
   }

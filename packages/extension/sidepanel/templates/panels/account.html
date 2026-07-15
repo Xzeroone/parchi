@@ -1,22 +1,20 @@
 <div id="accountPanel" class="right-panel-content hidden" data-panel="account">
     <div class="panel-header panel-header-with-actions">
-        <div>
+        <div class="panel-header-copy">
             <span class="panel-title">Account</span>
-            <span class="panel-subtitle">Your Grok connection</span>
         </div>
-        <button id="accountBackToSettingsBtn" class="btn btn-secondary panel-header-btn" type="button">Settings</button>
+        <button id="accountBackToSettingsBtn" class="btn btn-secondary panel-header-btn" type="button">Back</button>
     </div>
     <div class="settings-content account-panel-content">
-        <div class="account-overview-card">
+        <div class="account-overview-card account-overview-card-compact">
             <div>
                 <div class="account-overview-eyebrow">Grok</div>
                 <div id="accountGrokName" class="account-overview-title">Not connected</div>
-                <div id="accountGrokMeta" class="account-inline-note">Connect Grok to run chat and tools.</div>
+                <div id="accountGrokMeta" class="account-inline-note">Connect to run chat and tools.</div>
             </div>
             <span id="accountGrokStatusDot" class="provider-status-dot off" aria-hidden="true"></span>
         </div>
 
-        <div class="settings-section-label">Connection</div>
         <div id="accountGrokRow" class="provider-row-list">
             <div class="provider-row dim" id="accountGrokProviderRow">
                 <span class="provider-logo" id="accountGrokLogo"></span>

@@ -11,7 +11,7 @@
   align-items: center;
   justify-content: space-between;
   height: var(--topbar-height);
-  padding: 0 12px;
+  padding: 0 10px;
   background: var(--card);
   border-bottom: 1px solid var(--ink-2);
   flex-shrink: 0;
@@ -63,7 +63,7 @@
 }
 
 .topbar-btn {
-  --icon-btn-size: 30px;
+  --icon-btn-size: 28px;
   --icon-btn-radius: 8px;
   --icon-btn-color: var(--muted-dim);
   --icon-btn-hover-bg: rgba(255, 255, 255, 0.06);
@@ -161,10 +161,10 @@ body[data-right-panel="settings"] {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 12px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   min-height: 0;
   max-width: 100%;
 }
@@ -176,8 +176,8 @@ body[data-right-panel="settings"] {
 .right-panel-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-bottom: 20px;
+  gap: 8px;
+  padding-bottom: 12px;
 }
 
 .right-panel-content.hidden {
@@ -199,7 +199,7 @@ body[data-right-panel="settings"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -349,13 +349,13 @@ body[data-right-panel="settings"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
 }
 
 .panel-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;

@@ -14,16 +14,19 @@
 /* FAB Group — Below topbar, right side */
 .fab-group {
   position: fixed;
-  top: calc(var(--topbar-height) + 8px);
-  right: 12px;
+  top: calc(var(--topbar-height) + 6px);
+  right: 10px;
   display: flex;
   gap: 6px;
   align-items: center;
   z-index: 50;
-  transition: right var(--duration-normal) var(--ease-out-expo);
+  transition: right var(--duration-normal) var(--ease-out-expo), opacity var(--duration-fast) ease;
 }
 
+/* Hide FABs while settings/account sidebar is open — avoids overlay/friction on narrow panels */
 body.sidebar-open .fab-group {
+  opacity: 0;
+  pointer-events: none;
   right: calc(var(--sidebar-width) + 12px);
 }
 
@@ -429,16 +432,16 @@ body.sidebar-open .context-inspector-popover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 16px;
   text-align: center;
-  padding: 24px;
+  padding: 16px;
   overflow: hidden;
 }
 
 .chat-empty-gravity-well {
   position: relative;
-  width: 90px;
-  height: 90px;
+  width: 72px;
+  height: 72px;
 }
 
 .chat-empty-orbit {
@@ -519,7 +522,7 @@ body.sidebar-open .context-inspector-popover {
 }
 
 .chat-empty-title {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--foreground);
 }
@@ -527,18 +530,18 @@ body.sidebar-open .context-inspector-popover {
 .chat-empty-starters {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
-  max-width: 340px;
+  max-width: 320px;
 }
 
 .chat-empty-starter {
-  padding: 10px 14px;
-  border-radius: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
   border: 1px solid var(--ink-2);
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-family: inherit;
   cursor: pointer;
   transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, color var(--duration-fast)

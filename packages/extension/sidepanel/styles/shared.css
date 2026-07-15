@@ -10,8 +10,8 @@
 .account-auth-block-panel,
 .profile-editor-block {
   border: 1px solid var(--ink-1);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 10px;
+  padding: 10px 12px;
   background: var(--card);
 }
 
@@ -20,8 +20,13 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   background: linear-gradient(135deg, rgb(var(--accent-rgb) / 0.08), transparent 55%), var(--card);
+}
+
+.account-overview-card-compact {
+  padding: 8px 10px;
+  align-items: center;
 }
 
 .settings-intro-eyebrow,
@@ -37,11 +42,11 @@
 
 .settings-intro-title,
 .account-overview-title {
-  margin-top: 4px;
-  font-size: 14px;
+  margin-top: 2px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--foreground);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 /* Shared circular toolbar buttons */
@@ -146,8 +151,8 @@
 .provider-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 4px;
+  gap: 8px;
+  padding: 8px 4px;
   border-bottom: 1px solid var(--ink-1);
   transition: background var(--duration-fast) ease;
   cursor: default;
@@ -161,7 +166,7 @@
   background: var(--ink-1);
   border-radius: 8px;
   margin: 0 -4px;
-  padding: 10px 8px;
+  padding: 8px 8px;
 }
 
 .provider-row.dim {
