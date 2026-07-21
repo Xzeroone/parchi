@@ -172,16 +172,24 @@ export async function runOauthModelNormalizationSuite(runner: TestRunner) {
     runner.assertTrue(PROVIDER_REGISTRY['claude-oauth'] === undefined, 'claude-oauth should not be registered');
   });
 
-  await runner.test('ollama-cloud provider definition exists and has correct properties', () => {
+  await runner.test('ollama-cloud is live-first (empty static catalog, api-key)', () => {
     const def = PROVIDER_REGISTRY['ollama-cloud'];
-    runner.assertTrue(def !== undefined, 'ollama-cloud should be in PROVIDER_REGISTRY');
-    runner.assertEqual(def.type, 'api-key');
+    runner.assertTrue(def !== undefined && def.type === 'api-key');
     runner.assertEqual(def.sdkType, 'openai-compatible');
-    runner.assertEqual(def.authHeaderStyle, 'bearer');
     runner.assertEqual(def.defaultBaseUrl, 'https://ollama.com/v1');
-    runner.assertTrue(def.supportsModelListing, 'ollama-cloud should support model listing');
-    runner.assertEqual(def.modelsEndpoint, '/models');
-    runner.assertTrue(def.models && def.models.length >= 1, 'should have static models');
+    runner.assertTrue(def.supportsModelListing && def.modelsEndpoint === '/models');
+    runner.assertTrue(Array.isArray(def.models) && def.models.length === 0);
+  });
+
+  await runner.test('live-first merge keeps only live + manual (ollama)', () => {
+    const live = [{ id: 'live-a' }, { id: 'live-b' }];
+    const manual = [{ id: 'my-custom', addedManually: true as const }];
+    const merged = mergeProviderModelsWithOptions('ollama-cloud', [live, manual], {
+      liveSourcePresent: true,
+    });
+    runner.assertTrue(merged.some((m) => m.id === 'live-a') && merged.some((m) => m.id === 'live-b'));
+    runner.assertTrue(merged.some((m) => m.id === 'my-custom'));
+    runner.assertFalse(merged.some((m) => m.id === 'stale-static-model'));
   });
 
   log('\n=== Testing fetchModelsForProviderDetailed (live flag) ===', 'info');

@@ -1,10 +1,5 @@
 import type { ProviderInstance } from '@parchi/shared';
-import {
-  PROVIDER_REGISTRY,
-  fetchModelsForProviderDetailed,
-  getApiKeyProviders,
-} from '../../../ai/providers/registry.js';
-import { mergeProviderModelsWithOptions } from '../../../state/provider-models.js';
+import { PROVIDER_REGISTRY, getApiKeyProviders } from '../../../ai/providers/registry.js';
 import {
   buildProviderInstanceId,
   ensureProviderModel,
@@ -14,6 +9,8 @@ import {
 import { SidePanelUI } from '../core/panel-ui.js';
 
 import { getProviderSvg } from './panel-model-selector.js';
+// Side-effect: registers refreshApiKeyProviderModels on SidePanelUI.
+import './api-key-model-refresh.js';
 
 const sidePanelProto = SidePanelUI.prototype as SidePanelUI & Record<string, unknown>;
 
@@ -134,39 +131,44 @@ sidePanelProto.saveProviderEditorConfig = function saveProviderEditorConfig() {
       apiKey,
       name: def.name,
     });
-  // Always merge definition models with any existing models so the model grid
-  // shows every available model, even if the provider was previously saved with
-  // only a subset.
-  const defModels = (def.models || []).map((m) => ({
-    id: m.id,
-    label: m.label,
-    contextWindow: m.contextWindow,
-    supportsVision: m.supportsVision,
-  }));
+  // Live-listable providers (e.g. Ollama Cloud): do NOT seed a static catalog.
+  // Hermes-style live-first — only keep manually-added models until /models returns.
+  // Non-listing providers still bootstrap from definition models.
   const existingModels = existing?.models || [];
-  const seen = new Set(defModels.map((m) => m.id));
-  const seedModels = [...defModels, ...existingModels.filter((m: any) => !seen.has(m.id))];
-  const provider: ProviderInstance = ensureProviderModel(
-    {
-      id: providerId,
-      name: existing?.name || def.name,
-      provider: providerType,
-      authType: 'api-key',
-      apiKey,
-      customEndpoint: endpoint,
-      extraHeaders: existing?.extraHeaders || {},
-      isConnected: Boolean(apiKey),
-      models: seedModels,
-      createdAt: Number(existing?.createdAt || Date.now()),
-      updatedAt: Date.now(),
-      source: existing?.source || 'manual',
-    },
-    def.models?.[0]?.id || '',
-  );
+  const seedModels = def.supportsModelListing
+    ? existingModels.filter((m: { addedManually?: boolean }) => m.addedManually === true)
+    : (() => {
+        const defModels = (def.models || []).map((m) => ({
+          id: m.id,
+          label: m.label,
+          contextWindow: m.contextWindow,
+          supportsVision: m.supportsVision,
+        }));
+        const seen = new Set(defModels.map((m) => m.id));
+        return [...defModels, ...existingModels.filter((m: { id: string }) => !seen.has(m.id))];
+      })();
+
+  const provider: ProviderInstance = {
+    id: providerId,
+    name: existing?.name || def.name,
+    provider: providerType,
+    authType: 'api-key',
+    apiKey,
+    customEndpoint: endpoint,
+    extraHeaders: existing?.extraHeaders || {},
+    isConnected: Boolean(apiKey),
+    models: seedModels,
+    createdAt: Number(existing?.createdAt || Date.now()),
+    updatedAt: Date.now(),
+    source: existing?.source || 'manual',
+  };
+
+  // Only pin a bootstrap model for providers without live listing.
+  const bootstrapped = def.supportsModelListing ? provider : ensureProviderModel(provider, def.models?.[0]?.id || '');
 
   this.providers = {
     ...(this.providers || {}),
-    [provider.id]: provider,
+    [bootstrapped.id]: bootstrapped,
   };
 
   this.closeProviderEditor();
@@ -176,32 +178,9 @@ sidePanelProto.saveProviderEditorConfig = function saveProviderEditorConfig() {
   void this.persistAllSettings();
   this.updateStatus(`${def.name} configured`, 'success');
 
-  // Async: fetch full model list from API for providers that support it
+  // Async: fetch live model list — authoritative when the API responds.
   if (def.supportsModelListing && apiKey) {
-    void (async () => {
-      try {
-        const { models: fetched, live } = await fetchModelsForProviderDetailed(def, {
-          type: def.type,
-          apiKey,
-          customEndpoint: endpoint,
-        });
-        if (fetched.length > 0) {
-          const updated = {
-            ...this.providers[provider.id],
-            models: mergeProviderModelsWithOptions(
-              provider.provider,
-              [this.providers[provider.id]?.models || [], fetched],
-              { liveSourcePresent: live },
-            ),
-            updatedAt: Date.now(),
-          };
-          this.providers = { ...(this.providers || {}), [provider.id]: updated };
-          this.renderModelSelectorGrid?.();
-          this.renderApiProviderGrid();
-          void this.persistAllSettings({ silent: true });
-        }
-      } catch {}
-    })();
+    void this.refreshApiKeyProviderModels?.(bootstrapped.id);
   }
 };
 

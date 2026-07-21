@@ -60,12 +60,13 @@ function formatContextWindow(value?: number): string {
 }
 
 /** Exact model IDs or prefixes to enable by default in the composer model grid. */
-const DEFAULT_ENABLED_PREFIXES = ['grok', 'gpt-oss', 'qwen', 'deepseek', 'kimi', 'glm', 'minimax', 'llama'];
+const DEFAULT_ENABLED_PREFIXES = ['grok'];
 
 function isDefaultEnabled(modelId: string, providerType: string): boolean {
   const lower = modelId.toLowerCase();
   const provider = String(providerType || '').toLowerCase();
-  if (provider.includes('ollama')) return true;
+  // Ollama Cloud: opt-in only — user must check models in Settings → Model.
+  if (provider.includes('ollama')) return false;
   return DEFAULT_ENABLED_PREFIXES.some((p) => lower.startsWith(p.toLowerCase()));
 }
 
@@ -106,15 +107,18 @@ sidePanelProto.renderModelSelectorGrid = function renderModelSelectorGrid() {
     return;
   }
 
-  // Initialize enabledComposerModels from defaults if not yet set
-  if (!this._enabledComposerModels) {
-    const map: Record<string, boolean> = {};
-    for (const p of providers) {
-      for (const m of p.models) {
-        map[modelKey(p.id, m.id)] = isDefaultEnabled(m.id, p.provider);
+  // Ensure every known model has an explicit enabled flag.
+  // New discoveries (live Ollama list) get defaults only once — missing keys
+  // stay out of the composer picker (opt-in via isModelEnabled === true).
+  if (!this._enabledComposerModels) this._enabledComposerModels = {};
+  const enabledMap = this._enabledComposerModels as Record<string, boolean>;
+  for (const p of providers) {
+    for (const m of p.models) {
+      const key = modelKey(p.id, m.id);
+      if (!(key in enabledMap)) {
+        enabledMap[key] = isDefaultEnabled(m.id, p.provider);
       }
     }
-    this._enabledComposerModels = map;
   }
 
   const activeConfig = this.configs?.[this.currentConfig] || {};

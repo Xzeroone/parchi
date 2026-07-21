@@ -49,8 +49,14 @@ sidePanelProto.switchSettingsTab = function switchSettingsTab(
     // Connect: Grok (OAuth) + Ollama Cloud (API key).
     this.renderOAuthProviderGrid?.();
     this.renderApiProviderGrid?.();
+    // Live-first refresh so Ollama catalog drops models no longer served.
+    void this.refreshApiKeyProviderModels?.();
   }
   if (resolvedTab === 'model') {
+    void this.refreshApiKeyProviderModels?.().then(() => {
+      this.renderModelSelectorGrid?.();
+      this.populateModelSelect?.();
+    });
     this.renderModelSelectorGrid?.();
   }
   if (resolvedTab === 'display') {

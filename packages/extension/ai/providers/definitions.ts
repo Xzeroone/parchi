@@ -16,6 +16,7 @@ export const PROVIDER_REGISTRY: Record<string, ProviderDefinition> = {
     models: OAUTH_PROVIDERS.xai?.models,
   },
   // OpenAI-compatible cloud API (https://ollama.com/v1). Keys from ollama.com/settings/keys.
+  // No static catalog — live /v1/models is authoritative (Hermes-style live-first).
   'ollama-cloud': {
     key: 'ollama-cloud',
     name: 'Ollama Cloud',
@@ -25,14 +26,7 @@ export const PROVIDER_REGISTRY: Record<string, ProviderDefinition> = {
     authHeaderStyle: 'bearer',
     supportsModelListing: true,
     modelsEndpoint: '/models',
-    models: [
-      { id: 'gpt-oss:120b', label: 'GPT-OSS 120B', contextWindow: 131072 },
-      { id: 'qwen3-coder:480b', label: 'Qwen 3 Coder 480B', contextWindow: 131072 },
-      { id: 'deepseek-v3.1:671b', label: 'DeepSeek V3.1 671B', contextWindow: 131072 },
-      { id: 'kimi-k2:1t', label: 'Kimi K2 1T', contextWindow: 131072 },
-      { id: 'glm-4.6', label: 'GLM 4.6', contextWindow: 131072 },
-      { id: 'minimax-m2', label: 'MiniMax M2', contextWindow: 131072 },
-    ],
+    models: [],
   },
 };
 

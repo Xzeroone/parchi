@@ -23,11 +23,17 @@ function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/**
+ * Composer picker filter — must match Model-tab checkboxes (opt-in).
+ * Missing keys are disabled so newly discovered models (e.g. Ollama live list)
+ * do not appear until the user checks them in Settings → Model.
+ * When no preference map exists yet, show all (pre-init / first paint).
+ */
 function isModelEnabled(ui: any, providerId: string, modelId: string): boolean {
   const enabledModels: Record<string, boolean> | undefined = ui._enabledComposerModels;
   if (!enabledModels) return true;
   const key = `${providerId}::${modelId}`;
-  return enabledModels[key] !== false;
+  return enabledModels[key] === true;
 }
 
 /** Subsequence match score — all query chars must appear in order. Higher = tighter. */
