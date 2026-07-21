@@ -40,13 +40,16 @@ const PROVIDER_SVGS: Record<string, string> = {
     '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 14s1.5 2 4 2 4-2 4-2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/></svg>',
   // xAI (z.ai / Grok) — official X-shaped mark (source: svgl/xai_dark)
   xai: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.88 6.02l.24 9.32h1.9l.24-12.72Zm2.37-4.43h-2.9L10.82 8.13l1.45 2.07Zm-12.52 16.5h2.9l1.45-2.07-1.45-2.07Zm0-12.12 6.53 9.32h2.9L8.61 6.02Z"/></svg>',
+  // Ollama — llama silhouette mark
+  ollama:
+    '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 1.74.61 3.33 1.64 4.59L4 22h3l1.5-5h7L17 22h3l-2.64-8.41A6.97 6.97 0 0 0 19 9c0-3.87-3.13-7-7-7Zm0 2c2.76 0 5 2.24 5 5s-2.24 5-5 5-5-2.24-5-5 2.24-5 5-5Z"/></svg>',
   custom:
     '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
 };
 
 export function getProviderSvg(providerType: string): string {
-  const base = providerType.replace(/-oauth$/, '');
-  return PROVIDER_SVGS[base] || PROVIDER_SVGS.custom;
+  const base = providerType.replace(/-oauth$/, '').replace(/-cloud$/, '');
+  return PROVIDER_SVGS[base] || PROVIDER_SVGS[providerType] || PROVIDER_SVGS.custom;
 }
 
 function formatContextWindow(value?: number): string {
@@ -56,11 +59,13 @@ function formatContextWindow(value?: number): string {
   return String(value);
 }
 
-/** Exact model IDs or prefixes to enable by default (Grok-only product surface). */
-const DEFAULT_ENABLED_PREFIXES = ['grok'];
+/** Exact model IDs or prefixes to enable by default in the composer model grid. */
+const DEFAULT_ENABLED_PREFIXES = ['grok', 'gpt-oss', 'qwen', 'deepseek', 'kimi', 'glm', 'minimax', 'llama'];
 
-function isDefaultEnabled(modelId: string, _providerType: string): boolean {
+function isDefaultEnabled(modelId: string, providerType: string): boolean {
   const lower = modelId.toLowerCase();
+  const provider = String(providerType || '').toLowerCase();
+  if (provider.includes('ollama')) return true;
   return DEFAULT_ENABLED_PREFIXES.some((p) => lower.startsWith(p.toLowerCase()));
 }
 
@@ -96,7 +101,8 @@ sidePanelProto.renderModelSelectorGrid = function renderModelSelectorGrid() {
   );
 
   if (!providers.length) {
-    grid.innerHTML = '<div class="model-selector-empty">Connect Grok in the Connect tab to see available models.</div>';
+    grid.innerHTML =
+      '<div class="model-selector-empty">Connect Grok or add an Ollama Cloud API key in the Connect tab to see available models.</div>';
     return;
   }
 
@@ -212,7 +218,6 @@ sidePanelProto.selectModelFromGrid = function selectModelFromGrid(providerId: st
   void this.persistAllSettings?.({ silent: true });
   this.populateModelSelect?.();
   this.updateModelDisplay?.();
-  this.populateGenerationTab?.();
   this.renderModelSelectorGrid();
   this.updateStatus(`Model set to ${modelId}`, 'success');
 };

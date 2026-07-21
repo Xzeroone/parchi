@@ -138,7 +138,7 @@ export function resolveRuntimeModelProfile(profile: Record<string, any>, setting
       errorMessage: 'No model configured. Open Settings and choose a model to continue.',
     };
   }
-  // OAuth subscription providers (e.g. claude-oauth, codex-oauth)
+  // OAuth subscription providers (e.g. xai-oauth, codex-oauth)
   const provider = String(profile?.provider || '')
     .trim()
     .toLowerCase();

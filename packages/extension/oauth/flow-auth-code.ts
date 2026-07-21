@@ -35,13 +35,13 @@ async function exchangeCodeForTokens(
   codeVerifier: string,
   state: string,
 ): Promise<OAuthTokenSet> {
-  const isClaude = config.key === 'claude';
+  // Anthropic-style auth-code exchange (JSON body). Kept for re-enable if needed.
+  const useJsonBody = String(config.key) === 'claude';
 
   const headers: Record<string, string> = {};
   let body: string;
 
-  if (isClaude) {
-    // Claude uses JSON body
+  if (useJsonBody) {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify({
       code,
@@ -85,14 +85,14 @@ async function exchangeCodeForTokens(
     raw: data,
   };
 
-  // Extract email from Claude response
-  if (isClaude && data.account?.email_address) {
+  // Extract email from Anthropic-style account payload
+  if (useJsonBody && data.account?.email_address) {
     tokens.email = data.account.email_address;
     tokens.accountId = data.account.uuid;
   }
 
-  // Extract email from Codex ID token JWT
-  if (!isClaude && data.id_token) {
+  // Extract email from ID token JWT (form-encoded providers)
+  if (!useJsonBody && data.id_token) {
     try {
       const payload = JSON.parse(atob(data.id_token.split('.')[1]));
       tokens.email = payload.email;
@@ -186,12 +186,12 @@ export async function runAuthCodePkceFlow(config: OAuthProviderConfig, signal?: 
  * Refresh an access token using the provider's refresh_token grant.
  */
 export async function refreshAuthCodeTokens(config: OAuthProviderConfig, refreshToken: string): Promise<OAuthTokenSet> {
-  const isClaude = config.key === 'claude';
+  const useJsonBody = String(config.key) === 'claude';
 
   const headers: Record<string, string> = {};
   let body: string;
 
-  if (isClaude) {
+  if (useJsonBody) {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify({
       client_id: config.clientId,

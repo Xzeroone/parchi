@@ -1,4 +1,4 @@
-<!-- ===== CONNECT (Grok only) ===== -->
+<!-- ===== CONNECT (Grok OAuth + Ollama Cloud API key) ===== -->
 <div class="settings-tab-pane" data-pane="providers">
     <select id="activeConfig" class="hidden"><option value="default">Default</option></select>
 
@@ -18,6 +18,24 @@
             </div>
         </div>
     </div>
+
+    <div class="settings-section-label">Ollama Cloud</div>
+    <p class="settings-section-desc">Add your Ollama Cloud API key from ollama.com. Keys are stored locally.</p>
+    <div id="apiProviderGrid" class="provider-row-list"></div>
+    <div id="apiProviderEditor" class="provider-inline-editor hidden">
+        <div class="form-group">
+            <label for="providerEditorKey">API Key</label>
+            <input type="password" id="providerEditorKey" placeholder="Enter your API key..." />
+        </div>
+        <div class="form-group" id="providerEditorEndpointGroup">
+            <label for="providerEditorEndpoint">API URL <span class="optional-badge">optional</span></label>
+            <input type="text" id="providerEditorEndpoint" placeholder="https://ollama.com/v1" />
+        </div>
+        <div class="form-row">
+            <button id="providerEditorSaveBtn" class="btn btn-primary" style="flex:1">Save</button>
+            <button id="providerEditorCancelBtn" class="btn btn-secondary" style="flex:1">Cancel</button>
+        </div>
+    </div>
 </div>
 
 <!-- ===== MODEL ===== -->
@@ -25,99 +43,42 @@
     <div id="modelSelectorGrid" class="model-selector-grid"></div>
 </div>
 
-<!-- ===== GENERATION ===== -->
-<div class="settings-tab-pane" data-pane="generation">
-    <div class="form-group">
-        <label for="genTemperature">Temperature <span id="genTemperatureValue" class="form-value">0.7</span></label>
-        <input type="range" id="genTemperature" min="0" max="2" step="0.1" value="0.7" />
-    </div>
-    <div class="form-group">
-        <label for="genMaxTokens">Max Tokens</label>
-        <input type="number" id="genMaxTokens" min="1" max="32000" value="4096" />
-    </div>
-    <div class="form-group">
-        <label for="genContextLimit">Context Limit</label>
-        <input type="number" id="genContextLimit" min="4000" value="200000" />
-    </div>
-    <div class="form-group">
-        <label for="genTimeout">Timeout (ms)</label>
-        <input type="number" id="genTimeout" min="5000" step="1000" value="30000" />
-    </div>
-    <div class="form-group">
-        <label for="genScreenshotQuality">Screenshot Quality</label>
-        <select id="genScreenshotQuality">
-            <option value="high">High</option>
+<!-- ===== SCREENSHOTS & HISTORY ===== -->
+<div class="settings-tab-pane" data-pane="screenshots">
+    <div class="settings-section-label">Screenshots</div>
+    <label class="switch-row" for="enableScreenshots">
+        <span class="switch-copy">
+            <span class="switch-title">Enable Screenshots</span>
+            <span class="switch-subtitle">Allow the agent to capture page screenshots.</span>
+        </span>
+        <input type="checkbox" id="enableScreenshots" class="switch-input" checked />
+        <span class="switch-track"></span>
+    </label>
+    <label class="switch-row" for="sendScreenshotsAsImages">
+        <span class="switch-copy">
+            <span class="switch-title">Send as Images</span>
+            <span class="switch-subtitle">Attach screenshots as image data instead of text descriptions.</span>
+        </span>
+        <input type="checkbox" id="sendScreenshotsAsImages" class="switch-input" />
+        <span class="switch-track"></span>
+    </label>
+    <div class="form-group" style="margin-top: 8px;">
+        <label for="screenshotQuality">Screenshot Quality</label>
+        <select id="screenshotQuality">
             <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high" selected>High</option>
         </select>
     </div>
-
-    <div class="settings-section-label">Capabilities</div>
-    <div class="gen-toggles">
-        <label class="switch-row gen-switch-row" for="genEnableScreenshots">
-            <span class="switch-copy">
-                <span class="switch-title">Screenshots</span>
-                <span class="switch-subtitle">Allow screenshot capture.</span>
-            </span>
-            <input type="checkbox" id="genEnableScreenshots" class="switch-input" />
-            <span class="switch-track"></span>
-        </label>
-        <label class="switch-row gen-switch-row" for="genSendScreenshots">
-            <span class="switch-copy">
-                <span class="switch-title">Send as Images</span>
-                <span class="switch-subtitle">Send raw image bytes instead of text descriptions.</span>
-            </span>
-            <input type="checkbox" id="genSendScreenshots" class="switch-input" />
-            <span class="switch-track"></span>
-        </label>
-        <label class="switch-row gen-switch-row" for="genStreamResponses">
-            <span class="switch-copy">
-                <span class="switch-title">Streaming</span>
-                <span class="switch-subtitle">Render tokens live as they arrive.</span>
-            </span>
-            <input type="checkbox" id="genStreamResponses" class="switch-input" />
-            <span class="switch-track"></span>
-        </label>
-        <label class="switch-row gen-switch-row" for="genShowThinking">
-            <span class="switch-copy">
-                <span class="switch-title">Reasoning</span>
-                <span class="switch-subtitle">Show intermediate reasoning when provided.</span>
-            </span>
-            <input type="checkbox" id="genShowThinking" class="switch-input" />
-            <span class="switch-track"></span>
-        </label>
-        <label class="switch-row gen-switch-row" for="genAutoScroll">
-            <span class="switch-copy">
-                <span class="switch-title">Auto-scroll</span>
-                <span class="switch-subtitle">Keep the latest output in view.</span>
-            </span>
-            <input type="checkbox" id="genAutoScroll" class="switch-input" />
-            <span class="switch-track"></span>
-        </label>
-        <label class="switch-row gen-switch-row" for="genConfirmActions">
-            <span class="switch-copy">
-                <span class="switch-title">Confirm actions</span>
-                <span class="switch-subtitle">Ask before sensitive browser interactions.</span>
-            </span>
-            <input type="checkbox" id="genConfirmActions" class="switch-input" />
-            <span class="switch-track"></span>
-        </label>
-        <label class="switch-row gen-switch-row" for="genSaveHistory">
-            <span class="switch-copy">
-                <span class="switch-title">Save history</span>
-                <span class="switch-subtitle">Persist chat history.</span>
-            </span>
-            <input type="checkbox" id="genSaveHistory" class="switch-input" />
-            <span class="switch-track"></span>
-        </label>
-        <label class="switch-row gen-switch-row" for="genNotifyOnTurnComplete">
-            <span class="switch-copy">
-                <span class="switch-title">Turn completion ping</span>
-                <span class="switch-subtitle">Play a sound when the model finishes its turn.</span>
-            </span>
-            <input type="checkbox" id="genNotifyOnTurnComplete" class="switch-input" />
-            <span class="switch-track"></span>
-        </label>
-    </div>
+    <div class="settings-section-label" style="margin-top: 16px;">History</div>
+    <label class="switch-row" for="saveHistory">
+        <span class="switch-copy">
+            <span class="switch-title">Save History</span>
+            <span class="switch-subtitle">Keep a record of past conversations.</span>
+        </span>
+        <input type="checkbox" id="saveHistory" class="switch-input" checked />
+        <span class="switch-track"></span>
+    </label>
 </div>
 
 <!-- ===== DISPLAY ===== -->

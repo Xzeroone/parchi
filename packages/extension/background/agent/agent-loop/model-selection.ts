@@ -1,10 +1,10 @@
 import type { OAuthProviderKey } from '../../../oauth/types.js';
 
 export const OAUTH_PROVIDER_MAP: Record<string, OAuthProviderKey> = {
-  'claude-oauth': 'claude',
   'codex-oauth': 'codex',
   'copilot-oauth': 'copilot',
   'qwen-oauth': 'qwen',
+  'xai-oauth': 'xai',
 };
 
 export function inferModelFamily(modelId: string) {

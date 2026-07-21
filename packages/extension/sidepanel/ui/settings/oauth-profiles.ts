@@ -215,10 +215,10 @@ export async function syncOAuthProfiles(ui: SidePanelUI): Promise<void> {
         existing.modelId = nextModel;
         changed = true;
       }
-      // Only set contextLimit from model metadata if the profile doesn't already
-      // have a user-customized value — otherwise OAuth sync overwrites user edits
-      // on every sidepanel open.
-      if (nextModel && !existing.contextLimit) {
+      // Always refresh contextLimit from live model metadata so the effective
+      // context tracks the selected model's discovered context window rather
+      // than a stale hardcoded default.
+      if (nextModel) {
         const resolvedLimit = resolveProfileContextLimit(
           nextModel,
           config.key,
@@ -226,7 +226,7 @@ export async function syncOAuthProfiles(ui: SidePanelUI): Promise<void> {
           config.models || [],
           nextProvider.models || [],
         );
-        if (resolvedLimit) {
+        if (resolvedLimit && existing.contextLimit !== resolvedLimit) {
           existing.contextLimit = resolvedLimit;
           changed = true;
         }

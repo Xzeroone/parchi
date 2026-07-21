@@ -155,6 +155,35 @@ export async function runOauthModelNormalizationSuite(runner: TestRunner) {
     runner.assertEqual(PROVIDER_REGISTRY['xai-oauth'].modelsEndpoint, '/models');
   });
 
+  log('\n=== Testing Ollama Cloud + legacy prefix normalization ===', 'info');
+
+  await runner.test('Legacy Claude-prefixed model IDs still normalize via aliases', () => {
+    runner.assertEqual(
+      normalizeOAuthModelIdForProvider('claude', 'claude/claude-sonnet-4-6-20260601'),
+      'claude-sonnet-4-6-20260601',
+    );
+    runner.assertEqual(
+      normalizeOAuthModelIdForProvider('claude', 'anthropic/claude-opus-4-6-20260204'),
+      'claude-opus-4-6-20260204',
+    );
+  });
+
+  await runner.test('claude-oauth is not registered (removed)', () => {
+    runner.assertTrue(PROVIDER_REGISTRY['claude-oauth'] === undefined, 'claude-oauth should not be registered');
+  });
+
+  await runner.test('ollama-cloud provider definition exists and has correct properties', () => {
+    const def = PROVIDER_REGISTRY['ollama-cloud'];
+    runner.assertTrue(def !== undefined, 'ollama-cloud should be in PROVIDER_REGISTRY');
+    runner.assertEqual(def.type, 'api-key');
+    runner.assertEqual(def.sdkType, 'openai-compatible');
+    runner.assertEqual(def.authHeaderStyle, 'bearer');
+    runner.assertEqual(def.defaultBaseUrl, 'https://ollama.com/v1');
+    runner.assertTrue(def.supportsModelListing, 'ollama-cloud should support model listing');
+    runner.assertEqual(def.modelsEndpoint, '/models');
+    runner.assertTrue(def.models && def.models.length >= 1, 'should have static models');
+  });
+
   log('\n=== Testing fetchModelsForProviderDetailed (live flag) ===', 'info');
 
   await runner.test('fetchModelsForProviderDetailed returns live=false when listing unsupported', async () => {

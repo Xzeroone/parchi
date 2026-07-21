@@ -8,7 +8,6 @@ type VisionRule = true | RegExp;
 // `isVisionModelProfile` (background/model-profiles.ts).
 const VISION_RULES: Record<string, VisionRule> = {
   anthropic: true,
-  'claude-oauth': true,
   kimi: true,
   glm: /4\.6v|vision/,
   minimax: /vision/,

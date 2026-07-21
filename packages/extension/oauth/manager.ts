@@ -1,3 +1,4 @@
+import { refreshAuthCodeTokens, runAuthCodePkceFlow } from './flow-auth-code.js';
 import { type DeviceCodeFlowCallbacks, runDeviceCodeFlow } from './flow-device-code.js';
 import { refreshQwenToken } from './flow-token-refresh.js';
 import { OAUTH_PROVIDERS } from './providers.js';
@@ -48,11 +49,16 @@ export async function connectProvider(
   try {
     let tokens: OAuthTokenSet;
 
-    // xAI uses device_code flow
-    const deviceCallbacks: DeviceCodeFlowCallbacks = {
-      onDeviceCode: (response) => callbacks?.onDeviceCode?.(response),
-    };
-    tokens = await runDeviceCodeFlow(config, deviceCallbacks, controller.signal);
+    if (config.flowType === 'authorization_code_pkce') {
+      // Claude uses authorization_code + PKCE flow
+      tokens = await runAuthCodePkceFlow(config, controller.signal);
+    } else {
+      // xAI uses device_code flow
+      const deviceCallbacks: DeviceCodeFlowCallbacks = {
+        onDeviceCode: (response) => callbacks?.onDeviceCode?.(response),
+      };
+      tokens = await runDeviceCodeFlow(config, deviceCallbacks, controller.signal);
+    }
 
     await saveProviderTokens(key, tokens);
     return tokens;
@@ -105,6 +111,17 @@ export async function getAccessToken(key: OAuthProviderKey): Promise<string | nu
         refreshToken: refreshed.refreshToken,
         expiresAt: refreshed.expiresAt,
         resourceUrl: refreshed.resourceUrl,
+      });
+      return refreshed.accessToken;
+    }
+
+    // authorization_code_pkce providers: generic refresh when a refresh token exists
+    if (config.flowType === 'authorization_code_pkce' && tokens.refreshToken) {
+      const refreshed = await refreshAuthCodeTokens(config, tokens.refreshToken);
+      await updateProviderTokens(key, {
+        accessToken: refreshed.accessToken,
+        refreshToken: refreshed.refreshToken,
+        expiresAt: refreshed.expiresAt,
       });
       return refreshed.accessToken;
     }

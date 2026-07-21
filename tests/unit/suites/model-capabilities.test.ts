@@ -6,9 +6,8 @@ import { type TestRunner, log } from '../shared/runner.js';
 export async function runModelCapabilitiesSuite(runner: TestRunner) {
   log('\n=== Testing Model Capabilities ===', 'info');
 
-  await runner.test('resolveModelCapabilities treats Anthropic and Claude OAuth as always vision-capable', () => {
+  await runner.test('resolveModelCapabilities treats Anthropic as always vision-capable', () => {
     runner.assertTrue(resolveModelCapabilities('anthropic', 'claude-3-5-haiku-20241022').supportsVision);
-    runner.assertTrue(resolveModelCapabilities('claude-oauth', 'claude-opus-4-6-20260204').supportsVision);
   });
 
   await runner.test('resolveModelCapabilities treats every Kimi model as vision-capable', () => {
@@ -66,7 +65,6 @@ export async function runModelCapabilitiesSuite(runner: TestRunner) {
 
   await runner.test('isVisionModelProfile preserves prior behavior for every previously-handled provider', () => {
     runner.assertTrue(isVisionModelProfile({ provider: 'anthropic', model: 'claude-sonnet-4' }));
-    runner.assertTrue(isVisionModelProfile({ provider: 'claude-oauth', model: 'claude-sonnet-4' }));
     runner.assertTrue(isVisionModelProfile({ provider: 'kimi', model: 'kimi-k2-turbo-preview' }));
     runner.assertTrue(isVisionModelProfile({ provider: 'glm', model: 'GLM-4.6V' }));
     runner.assertFalse(isVisionModelProfile({ provider: 'glm', model: 'glm-4.6' }));

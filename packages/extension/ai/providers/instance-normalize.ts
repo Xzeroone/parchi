@@ -71,7 +71,7 @@ export const buildProviderFromProfile = (
   const providerName =
     asString(profile.providerLabel) ||
     (authType === 'oauth'
-      ? OAUTH_PROVIDERS[oauthProviderKey || 'claude']?.name
+      ? OAUTH_PROVIDERS[oauthProviderKey || 'xai']?.name
       : getProviderDefinition(providerType)?.name || profileName);
   const customEndpoint = asString(profile.customEndpoint);
   const apiKey = asString(profile.apiKey);

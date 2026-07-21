@@ -1,5 +1,3 @@
-import type { OAuthProviderKey } from './types.js';
-
 const NON_TEXT_MODEL_PATTERNS = [
   /(^|[-_/])embed(ding)?([-.]|$)/i,
   /(^|[-_/])moderation([-.]|$)/i,
@@ -42,7 +40,7 @@ export function isLikelyTextGenerationModelId(providerKey: string, modelId: stri
   const provider = String(providerKey || '')
     .trim()
     .toLowerCase()
-    .replace(/-oauth$/, '') as OAuthProviderKey;
+    .replace(/-oauth$/, '');
   if (provider === 'claude') return lower.includes('claude');
   if (provider === 'qwen') return lower.includes('qwen');
   if (provider === 'codex') return /^gpt|^o\d|codex/i.test(lower);

@@ -104,7 +104,8 @@ sidePanelProto.openProviderEditor = function openProviderEditor(providerKeyOrId:
     this.elements.providerEditorEndpoint.placeholder = def.defaultBaseUrl || 'https://...';
   }
   if (this.elements.providerEditorEndpointGroup) {
-    this.elements.providerEditorEndpointGroup.style.display = providerType === 'xai-oauth' ? '' : 'none';
+    // Show optional endpoint override for API-key providers (e.g. Ollama Cloud).
+    this.elements.providerEditorEndpointGroup.style.display = def.type === 'api-key' ? '' : 'none';
   }
 };
 

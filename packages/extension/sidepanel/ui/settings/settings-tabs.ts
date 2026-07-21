@@ -3,7 +3,7 @@ import { SidePanelUI } from '../core/panel-ui.js';
 const sidePanelProto = SidePanelUI.prototype as SidePanelUI & Record<string, unknown>;
 
 sidePanelProto.switchSettingsTab = function switchSettingsTab(
-  tabName: 'providers' | 'model' | 'generation' | 'display' | 'advanced' | string = 'providers',
+  tabName: 'providers' | 'model' | 'screenshots' | 'display' | 'permissions' | string = 'providers',
 ) {
   const tabMap: Record<string, string> = {
     connect: 'providers',
@@ -13,27 +13,27 @@ sidePanelProto.switchSettingsTab = function switchSettingsTab(
     look: 'display',
     design: 'display',
     theme: 'display',
-    agents: 'advanced',
-    system: 'advanced',
-    usage: 'advanced',
+    agents: 'permissions',
+    system: 'permissions',
+    usage: 'permissions',
   };
-  const resolvedTab = (tabMap[tabName] || tabName) as 'providers' | 'model' | 'generation' | 'display' | 'advanced';
+  const resolvedTab = (tabMap[tabName] || tabName) as 'providers' | 'model' | 'screenshots' | 'display' | 'permissions';
   this.currentSettingsTab = resolvedTab;
 
-  const tabs = ['providers', 'model', 'generation', 'display', 'advanced'] as const;
+  const tabs = ['providers', 'model', 'screenshots', 'display', 'permissions'] as const;
   const tabElements: Record<string, HTMLElement | null> = {
     providers: this.elements.settingsTabProviders || document.getElementById('settingsTabProviders'),
     model: this.elements.settingsTabModel || document.getElementById('settingsTabModel'),
-    generation: this.elements.settingsTabGeneration || document.getElementById('settingsTabGeneration'),
+    screenshots: document.getElementById('settingsTabScreenshots'),
     display: document.getElementById('settingsTabDisplay'),
-    advanced: this.elements.settingsTabAdvanced || document.getElementById('settingsTabAdvanced'),
+    permissions: this.elements.settingsTabPermissions || document.getElementById('settingsTabPermissions'),
   };
   const btnElements: Record<string, HTMLElement | null> = {
     providers: this.elements.settingsTabProvidersBtn || document.getElementById('settingsTabProvidersBtn'),
     model: this.elements.settingsTabModelBtn || document.getElementById('settingsTabModelBtn'),
-    generation: this.elements.settingsTabGenerationBtn || document.getElementById('settingsTabGenerationBtn'),
+    screenshots: document.getElementById('settingsTabScreenshotsBtn'),
     display: document.getElementById('settingsTabDisplayBtn'),
-    advanced: this.elements.settingsTabAdvancedBtn || document.getElementById('settingsTabAdvancedBtn'),
+    permissions: this.elements.settingsTabPermissionsBtn || document.getElementById('settingsTabPermissionsBtn'),
   };
 
   for (const tab of tabs) {
@@ -46,20 +46,15 @@ sidePanelProto.switchSettingsTab = function switchSettingsTab(
   }
 
   if (resolvedTab === 'providers') {
-    // Connect tab is Grok-only (OAuth). Paid/API-key/custom provider grids were removed.
+    // Connect: Grok (OAuth) + Ollama Cloud (API key).
     this.renderOAuthProviderGrid?.();
+    this.renderApiProviderGrid?.();
   }
   if (resolvedTab === 'model') {
     this.renderModelSelectorGrid?.();
   }
-  if (resolvedTab === 'generation') {
-    this.populateGenerationTab?.();
-  }
   if (resolvedTab === 'display') {
     this.renderThemeGrid?.();
-  }
-  if (resolvedTab === 'advanced') {
-    this.renderTeamProfileList?.();
   }
 };
 

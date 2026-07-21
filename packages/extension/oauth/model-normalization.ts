@@ -1,11 +1,15 @@
 import type { OAuthProviderKey } from './types.js';
 
 const OAUTH_PROVIDER_MODEL_PREFIX_ALIASES: Record<OAuthProviderKey, string[]> = {
-  claude: ['claude', 'anthropic'],
   codex: ['codex', 'openai'],
   copilot: ['copilot', 'github-copilot', 'githubcopilot', 'github'],
   qwen: ['qwen'],
   xai: ['grok', 'xai', 'x.ai'],
+};
+
+// Extra aliases for non-active OAuth keys still seen in model IDs / tests.
+const EXTRA_MODEL_PREFIX_ALIASES: Record<string, string[]> = {
+  claude: ['claude', 'anthropic'],
 };
 
 const normalizeProviderSpecificOAuthModelId = (providerKey: string, modelId: string): string => {
@@ -35,7 +39,8 @@ export function normalizeOAuthModelIdForProvider(providerKey: string, modelId: s
   if (!baseProviderKey) return model;
 
   if (model.includes('/')) {
-    const aliases = OAUTH_PROVIDER_MODEL_PREFIX_ALIASES[baseProviderKey as OAuthProviderKey] || [baseProviderKey];
+    const aliases = OAUTH_PROVIDER_MODEL_PREFIX_ALIASES[baseProviderKey as OAuthProviderKey] ||
+      EXTRA_MODEL_PREFIX_ALIASES[baseProviderKey] || [baseProviderKey];
     const stripPrefixes = new Set([baseProviderKey, ...aliases].map((alias) => alias.toLowerCase()));
 
     for (let i = 0; i < 2; i += 1) {
