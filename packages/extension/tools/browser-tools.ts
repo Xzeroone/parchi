@@ -47,6 +47,69 @@ export class BrowserTools {
     this.maxSessionTabs = DEFAULT_MAX_SESSION_TABS;
   }
 
+  /**
+   * Prune session tabs that no longer exist in Chrome. Called by the background
+   * service worker's onRemoved listener so resolveTabId never latches onto a
+   * closed tab between runs. Keeps currentSessionTabId consistent if its tab was
+   * the one closed.
+   */
+  async pruneClosedTabs(): Promise<void> {
+    const staleIds: number[] = [];
+    for (const tabId of this.sessionTabs.keys()) {
+      try {
+        await chrome.tabs.get(tabId);
+      } catch {
+        staleIds.push(tabId);
+      }
+    }
+    for (const tabId of staleIds) {
+      this.sessionTabs.delete(tabId);
+      if (this.currentSessionTabId === tabId) {
+        this.currentSessionTabId = this.sessionTabs.size > 0 ? (this.sessionTabs.keys().next().value ?? null) : null;
+      }
+    }
+  }
+
+  /**
+   * Update this session's currentSessionTabId when the user activates a tab in
+   * Chrome. Only latches onto the activated tab if it already belongs to this
+   * session (so subagent sessions don't hijack each other's focus). If the
+   * activated tab isn't a session tab and we currently have no focus, lazily
+   * capture it (respecting restricted-URL rules from captureActiveTabState).
+   */
+  async syncActiveTab(tabId: number, windowId?: number): Promise<void> {
+    if (this.sessionTabs.has(tabId)) {
+      this.currentSessionTabId = tabId;
+      try {
+        const tab = await chrome.tabs.get(tabId);
+        const existing = this.sessionTabs.get(tabId);
+        if (existing) {
+          existing.title = tab.title || existing.title;
+          existing.url = tab.url ?? existing.url;
+          existing.favIconUrl = tab.favIconUrl ?? existing.favIconUrl;
+          if (typeof tab.windowId === 'number') existing.windowId = tab.windowId;
+        }
+      } catch {
+        // Tab gone between activation event and get — prune will catch it.
+      }
+      return;
+    }
+    // Activated a non-session tab. Only capture it for sessions that already
+    // have tabs in the same window (so a subagent in window B doesn't latch onto
+    // a tab the user clicked in window A), OR sessions with no tabs at all
+    // (fresh session — needs a target).
+    if (this.currentSessionTabId === null) {
+      if (this.sessionTabs.size === 0) {
+        await this.captureActiveTab();
+        return;
+      }
+      if (typeof windowId === 'number') {
+        const ownsWindow = Array.from(this.sessionTabs.values()).some((t) => t.windowId === windowId);
+        if (ownsWindow) await this.captureActiveTab();
+      }
+    }
+  }
+
   getToolDefinitions(): ReturnType<typeof getBrowserToolDefinitions> {
     return getBrowserToolDefinitions(this.supportsTabGroups, this.supportsDebugger);
   }
@@ -160,8 +223,8 @@ export class BrowserTools {
     return runInAllFrames(tabId, func, args);
   }
 
-  async runUserScript<T = unknown>(tabId: number, code: string) {
-    return executeUserScript<T>(tabId, code);
+  async runUserScript(tabId: number, code: string) {
+    return executeUserScript(tabId, code);
   }
 
   async watchNetwork(tabId: number, clearExisting = true) {

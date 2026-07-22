@@ -49,25 +49,29 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
     durationMs: Math.min(timeoutMs, 1500),
   });
 
-  // For pure-script waits (no selector/text), try userScripts path first
+  // For pure-script waits (no selector/text), try userScripts path first.
+  // executeUserScript returns:
+  //   { success: true, result: <wrapper payload> }  (injection succeeded)
+  //   { success: false, error, code, hint? }       (API/toggle/frame errors)
+  // The injected wrapper payload carries script errors with code: 'script_error'.
   if (script && !selector && !expectedText) {
     const code = buildWaitForScriptUserScript(script, scriptArgs, timeoutMs, pollIntervalMs);
-    const usResult = await ctx.runUserScript<{
-      success: boolean;
-      error?: string;
-      code?: string;
-      matchedScript?: boolean;
-      elapsedMs?: number;
-      attempts?: number;
-    }>(tabId, code);
-    if (usResult.success && usResult.result) {
-      return usResult.result;
+    const usResult = await ctx.runUserScript(tabId, code);
+    if (usResult.success) {
+      const payload = usResult.result as {
+        success?: boolean;
+        error?: string;
+        code?: string;
+        matchedScript?: boolean;
+        elapsedMs?: number;
+        attempts?: number;
+      } | null;
+      if (payload && typeof payload === 'object' && typeof payload.success === 'boolean') {
+        return payload;
+      }
+      return { success: true, result: payload };
     }
-    // Script-level error — return it directly
-    if (!usResult.success && usResult.code === 'script_error') {
-      return usResult;
-    }
-    // API-level failure — fall through to executeScript
+    // API/toggle/frame failure — fall through to executeScript fallback.
   }
 
   const result = await ctx.runInTab(

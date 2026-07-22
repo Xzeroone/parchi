@@ -18,14 +18,23 @@ export async function buildAgentLoopContext(
     teamProfiles,
     isVisionModelProfile(orchestratorProfile),
   );
-  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  // BrowserTools is the single source of truth for the focused tab. If it has
+  // no focus yet, resolveTabId's captureActiveTab path will latch one lazily;
+  // call it once here so the system-prompt snapshot matches the tab tools will
+  // actually operate on. Avoids the prior bug where context.ts queried the
+  // active tab independently and disagreed with BrowserTools.
+  let workingTabId = browserTools.getCurrentSessionTabId();
+  if (workingTabId === null || !browserTools.sessionTabs.has(workingTabId)) {
+    // resolveTabId with no args runs the full fallback chain (currentSessionTabId
+    // → single session tab → captureActiveTab) and is exactly what tools use.
+    workingTabId = await browserTools.resolveTabId();
+  }
   const sessionTabs = browserTools.getSessionTabSummaries();
-  const workingTabId: number | null = browserTools.getCurrentSessionTabId() ?? activeTab?.id ?? null;
-  const workingTab = sessionTabs.find((tab) => tab.id === workingTabId);
+  const workingTab = workingTabId != null ? sessionTabs.find((tab) => tab.id === workingTabId) : undefined;
 
   return {
-    currentUrl: workingTab?.url || activeTab?.url || 'unknown',
-    currentTitle: workingTab?.title || activeTab?.title || 'unknown',
+    currentUrl: workingTab?.url || 'unknown',
+    currentTitle: workingTab?.title || 'unknown',
     tabId: workingTabId,
     availableTabs: sessionTabs
       .filter((tab) => typeof tab.id === 'number')

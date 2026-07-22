@@ -111,6 +111,14 @@ export async function runSubagentAI(
     providerOptions: usesOAuth ? buildCodexOAuthProviderOptions(systemPrompt) : undefined,
     stopWhen: stepCountIs(24),
     onChunk: ({ chunk }) => handleReasoningChunk(ctx, parentRunMeta, chunk, runtimeMeta),
+    onError: ({ error }) => {
+      if (!abortSignal?.aborted) {
+        const message = error instanceof Error ? error.message : String(error ?? '');
+        if (message && !message.includes('AbortError') && !message.includes('aborted')) {
+          console.warn('[runSubagentAI] Stream error (will surface via run_error):', message);
+        }
+      }
+    },
   });
 
   const streamCtx = createStreamContext(runtimeMeta);

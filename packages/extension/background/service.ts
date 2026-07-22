@@ -99,7 +99,31 @@ export class BackgroundService implements ServiceContext {
         console.warn('Failed to configure Kimi User-Agent header support:', error);
       });
 
-    chrome.tabs.onRemoved.addListener((tabId) => this.subagentTabBadges.delete(tabId));
+    chrome.tabs.onRemoved.addListener((tabId) => {
+      this.subagentTabBadges.delete(tabId);
+      // Drop the closed tab from every session's sessionTabs and reset focus if
+      // it was the current tab. Cheap sync per-session — avoids the next tool
+      // call latching onto a dead tab id.
+      for (const browserTools of this.browserToolsBySessionId.values()) {
+        if (browserTools.sessionTabs.has(tabId)) {
+          browserTools.sessionTabs.delete(tabId);
+          if (browserTools.currentSessionTabId === tabId) {
+            browserTools.currentSessionTabId =
+              browserTools.sessionTabs.size > 0 ? (browserTools.sessionTabs.keys().next().value ?? null) : null;
+          }
+        }
+      }
+    });
+
+    // When the user activates a tab in Chrome, update each session's focus if
+    // the activated tab belongs to that session. This keeps currentSessionTabId
+    // in sync with the user's actual click between runs.
+    chrome.tabs.onActivated.addListener((activeInfo) => {
+      const { tabId, windowId } = activeInfo;
+      for (const browserTools of this.browserToolsBySessionId.values()) {
+        void browserTools.syncActiveTab(tabId, windowId);
+      }
+    });
 
     chrome.runtime.onConnect.addListener((port) => {
       if (port.name === 'sidepanel-lifecycle') {

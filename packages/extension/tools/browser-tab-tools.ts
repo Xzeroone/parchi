@@ -88,7 +88,10 @@ export async function openTabTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
 
   try {
     const targetWindowId = await ctx.resolveSessionWindowId();
-    const createOptions: chrome.tabs.CreateProperties = { url, active: true };
+    // Open backgrounded so the agent opening a tab mid-run doesn't yank the
+    // user's focus away. The agent will switchTab() explicitly if it needs
+    // the user to look at it.
+    const createOptions: chrome.tabs.CreateProperties = { url, active: false };
     if (typeof targetWindowId === 'number') {
       createOptions.windowId = targetWindowId;
     }
@@ -137,12 +140,24 @@ export async function switchTabTool(ctx: BrowserToolsDelegate, args: BrowserTool
   }
   await chrome.tabs.update(tabId, { active: true });
   ctx.currentSessionTabId = tabId;
+  // Always keep sessionTabs in sync with the focused tab. If the model asked to
+  // switch to a tab that wasn't part of the session (e.g. discovered via
+  // getTabs), adopt it so the next resolveTabId call doesn't silently fall
+  // through to captureActiveTab and re-target a different tab.
   const existing = ctx.sessionTabs.get(tabId);
   if (existing) {
     existing.windowId = typeof tab.windowId === 'number' ? tab.windowId : existing.windowId;
     existing.title = tab.title || existing.title;
     existing.url = tab.url || existing.url;
     existing.favIconUrl = tab.favIconUrl || existing.favIconUrl;
+  } else {
+    ctx.sessionTabs.set(tabId, {
+      id: tabId,
+      title: tab.title,
+      url: tab.url,
+      favIconUrl: tab.favIconUrl,
+      windowId: typeof tab.windowId === 'number' ? tab.windowId : undefined,
+    });
   }
   await ctx.sendOverlay(tabId, { label: 'Focused tab', durationMs: 1200 }, 1);
   return { success: true, tabId };

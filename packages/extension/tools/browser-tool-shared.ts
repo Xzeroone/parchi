@@ -84,10 +84,10 @@ export interface BrowserToolsDelegate {
     func: (...args: TArgs) => TResult | Promise<TResult>,
     args: TArgs,
   ): Promise<BrowserToolResult<TResult>>;
-  runUserScript<T = unknown>(
+  runUserScript(
     tabId: number,
     code: string,
-  ): Promise<{ success: true; result: T } | { success: false; error: string; code: string; hint?: string }>;
+  ): Promise<{ success: true; result: unknown } | { success: false; error: string; code: string; hint?: string }>;
   watchNetwork(tabId: number, clearExisting?: boolean): Promise<BrowserToolResult>;
   readNetworkLog(
     tabId: number,
@@ -101,6 +101,12 @@ export interface BrowserToolsDelegate {
     },
   ): Promise<BrowserToolResult<{ success: true; entries: BrowserNetworkLogEntry[] }>>;
   sendOverlay(tabId: number, payload: ActionOverlayPayload, retries?: number): Promise<void>;
+  /** Prune session tabs that no longer exist in Chrome. */
+  pruneClosedTabs(): Promise<void>;
+  /** Sync focus when Chrome activates a tab in this session's window. */
+  syncActiveTab(tabId: number, windowId?: number): Promise<void>;
+  /** Current focused tab id for this session (null if none). */
+  getCurrentSessionTabId(): number | null;
 }
 
 export const DEFAULT_MAX_SESSION_TABS = 5;

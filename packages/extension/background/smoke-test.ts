@@ -68,6 +68,12 @@ export async function runApiSmokeTest(
       maxOutputTokens,
       temperature: 0,
       providerOptions: smokeUsesCodexOAuth ? buildCodexOAuthProviderOptions('You are a concise assistant.') : undefined,
+      onError: ({ error }) => {
+        const message = error instanceof Error ? error.message : String(error ?? '');
+        if (message && !message.includes('AbortError') && !message.includes('aborted')) {
+          console.warn('[runApiSmokeTest] Stream error (will surface as result.error):', message);
+        }
+      },
     });
 
     const [text, responseMessages, usage] = await Promise.all([
@@ -150,6 +156,12 @@ Rules:
       maxOutputTokens: workflowUsesCodexOAuth ? undefined : outputLimit,
       temperature: 0.3,
       providerOptions: workflowUsesCodexOAuth ? buildCodexOAuthProviderOptions(workflowSystemPrompt) : undefined,
+      onError: ({ error }) => {
+        const message = error instanceof Error ? error.message : String(error ?? '');
+        if (message && !message.includes('AbortError') && !message.includes('aborted')) {
+          console.warn('[generateWorkflowPrompt] Stream error (will surface as result.error):', message);
+        }
+      },
     });
 
     const text = typeof (await result.text) === 'string' ? (await result.text).trim() : '';

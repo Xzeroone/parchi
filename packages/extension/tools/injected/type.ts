@@ -227,6 +227,12 @@ export const injectedType = async (
     const inputType = el instanceof HTMLInputElement ? el.type : 'text';
     if (inputType === 'checkbox' || inputType === 'radio')
       return { success: false, error: 'Element is a checkbox/radio. Use click instead.' };
+    if (inputType === 'file')
+      return {
+        success: false,
+        error: 'File inputs require a user gesture to open the file chooser dialog.',
+        hint: 'Ask the user to upload the file manually via the page, or use a different upload mechanism.',
+      };
     try {
       el.scrollIntoView({ block: 'center', inline: 'center' } as any);
     } catch {}

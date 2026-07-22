@@ -202,8 +202,23 @@ export const injectedClick = async (spec: SelectorSpec, waitMs: number): Promise
     const cy = Math.max(1, Math.min(window.innerHeight - 2, rect.top + rect.height / 2));
     const top = document.elementFromPoint(cx, cy) as HTMLElement | null;
     const target = top && (top === el || el.contains(top)) ? top : el;
+    if (isFileInput(target)) {
+      return {
+        success: false as const,
+        error: 'File chooser dialogs cannot be opened without a user activation.',
+        hint: 'Ask the user to click the file input manually, or provide the file via a different mechanism.',
+        strategy: 'file-input-blocked',
+        candidates: 1,
+      };
+    }
     dispatchSyntheticClick(target, cx, cy);
     return { success: true as const };
+  };
+
+  const isFileInput = (el: Element): boolean => {
+    if (!(el instanceof HTMLElement)) return false;
+    if (el.tagName === 'INPUT' && (el as HTMLInputElement).type === 'file') return true;
+    return false;
   };
 
   const start = performance.now();

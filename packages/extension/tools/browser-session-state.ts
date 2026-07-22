@@ -167,14 +167,18 @@ export async function groupTabsInternalState(supportsTabGroups: boolean, tabIds:
 export async function captureActiveTabState(
   sessionTabs: Map<number, SessionTabSummary>,
   setCurrentSessionTabId: (tabId: number | null) => void,
-) {
+): Promise<number | null> {
   try {
     const activeTab = await getActiveTab();
     if (!activeTab || typeof activeTab.id !== 'number') return null;
     // Skip restricted URLs that extensions cannot access
     const url = activeTab.url || activeTab.pendingUrl || '';
     if (/^(chrome|chrome-extension|devtools|edge|about):\/\//i.test(url)) {
-      console.warn('[captureActiveTab] Skipped restricted URL:', url);
+      console.warn(
+        '[captureActiveTab] Skipped restricted URL:',
+        url,
+        '— tools cannot run on browser-internal pages. Select a regular http(s) tab in the sidepanel tab picker.',
+      );
       return null;
     }
     if (!sessionTabs.has(activeTab.id)) {

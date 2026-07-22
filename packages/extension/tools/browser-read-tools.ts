@@ -24,20 +24,24 @@ export async function evaluateTool(ctx: BrowserToolsDelegate, args: BrowserToolA
     durationMs: 800,
   });
 
-  // Try userScripts path first (CSP-exempt, USER_SCRIPT world)
+  // Try userScripts path first (CSP-exempt, USER_SCRIPT world).
+  // executeUserScript normalizes the InjectionResult into:
+  //   { success: true, result: <wrapper payload { success, result?, error? }> }
+  //   { success: false, error, code, hint? }   (API/toggle/frame errors)
+  // The injected wrapper payload carries script-level errors with code: 'script_error'.
   const code = buildEvaluateUserScript(script, scriptArgs);
-  const usResult = await ctx.runUserScript<{ success: boolean; result?: unknown; error?: string; code?: string }>(
-    tabId,
-    code,
-  );
-  if (usResult.success && usResult.result) {
-    return usResult.result;
+  const usResult = await ctx.runUserScript(tabId, code);
+  if (usResult.success) {
+    // usResult.result is the injected wrapper payload.
+    const payload = usResult.result as { success?: boolean; result?: unknown; error?: string; code?: string } | null;
+    if (payload && typeof payload === 'object' && typeof payload.success === 'boolean') {
+      return payload;
+    }
+    // Unexpected shape — pass through as a best-effort success.
+    return { success: true, result: payload };
   }
-  // Script-level error (not API failure) — return it directly
-  if (!usResult.success && usResult.code === 'script_error') {
-    return usResult;
-  }
-  // API-level failure (not enabled, etc.) — fall through to executeScript
+  // Script-level errors are carried inside the payload (handled above).
+  // Here: API/toggle/frame failure — fall through to executeScript fallback.
 
   // Fallback: chrome.scripting.executeScript (works on non-CSP pages)
   const result = await ctx.runInTab(

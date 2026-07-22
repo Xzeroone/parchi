@@ -71,6 +71,14 @@ export async function runAgentModelPass(
     ctx.sendRuntime(prepared.runMeta, { type: 'assistant_stream_stop' });
     streamStopSent = true;
   };
+  const handleStreamError = ({ error }: { error: unknown }) => {
+    if (!abortSignal.aborted) {
+      const message = error instanceof Error ? error.message : String(error ?? '');
+      if (message && !message.includes('AbortError') && !message.includes('aborted')) {
+        console.warn('[runAgentModelPass] Stream error (will surface via run_error):', message);
+      }
+    }
+  };
   const sendTextDelta = (textPart: string) => {
     if (!textPart) return;
     markFirstTextToken();
@@ -142,6 +150,7 @@ export async function runAgentModelPass(
         );
       }
     },
+    onError: handleStreamError,
   });
 
   const resolveText = async () => {

@@ -2,24 +2,102 @@
  * chrome.userScripts API wrapper for CSP-exempt script execution.
  *
  * chrome.userScripts.execute (Chrome 135+) runs code in the USER_SCRIPT world,
- * which is exempt from the page's Content Security Policy. This allows
- * evaluate() and waitFor(script) to work on CSP-strict pages (social networks,
- * banking, Google apps, etc.) without weakening extension-page CSP.
+ * which is exempt from the page's Content Security Policy. This lets evaluate()
+ * and waitFor(script) work on CSP-strict pages (social networks, banking, Google
+ * apps, etc.) without weakening extension-page CSP.
  *
  * Security: USER_SCRIPT is a less-trusted context. Results are serialized
  * before returning to the extension — never treat them as privileged.
+ *
+ * Availability notes (per https://developer.chrome.com/docs/extensions/reference/api/userScripts):
+ *  - Chrome <138: requires Developer Mode toggle on chrome://extensions.
+ *  - Chrome 138+: requires "Allow User Scripts" toggle on the extension's details page.
+ *  - When the toggle is off, `chrome.userScripts` is `undefined` and a service-worker
+ *    context reload is required after the user enables it.
+ *  - The docs-recommended probe is to call a no-op method (getScripts()) and catch,
+ *    because the API object can be defined while its methods throw "not enabled".
  */
 
+import {
+  type UserScriptPayload,
+  buildEvaluateUserScript,
+  buildWaitForScriptUserScript,
+} from './browser-user-script-builders.js';
+
+export { buildEvaluateUserScript, buildWaitForScriptUserScript, type UserScriptPayload };
+
+/**
+ * InjectionResult as returned by chrome.userScripts.execute (Chrome 135+).
+ * `result` and `error` are mutually exclusive. Kept here as a minimal local type
+ * because @types/chrome (0.0.268) predates the execute() method.
+ */
+export interface UserScriptInjectionResult {
+  frameId: number;
+  documentId?: string;
+  result?: unknown;
+  error?: string;
+}
+
+type UserScriptsExecuteApi = {
+  execute: (injection: {
+    target: { tabId: number; allFrames?: boolean; frameIds?: number[] };
+    js: Array<{ code: string }>;
+    world?: 'USER_SCRIPT' | 'MAIN';
+    injectImmediately?: boolean;
+  }) => Promise<UserScriptInjectionResult[]>;
+  configureWorld: (properties: {
+    csp?: string;
+    messaging?: boolean;
+  }) => Promise<void>;
+  getScripts: () => Promise<unknown>;
+};
+
+function getUserScriptsApi(): UserScriptsExecuteApi | null {
+  const chromeApi = (globalThis as Record<string, unknown>).chrome as
+    | (Record<string, unknown> & { userScripts?: unknown })
+    | undefined;
+  if (typeof chromeApi !== 'object' || chromeApi === null) return null;
+  const us = chromeApi.userScripts as UserScriptsExecuteApi | undefined;
+  if (!us || typeof us.execute !== 'function') return null;
+  return us;
+}
+
+export type UserScriptsAvailability = {
+  available: boolean;
+  code?: string;
+  hint?: string;
+};
+
+/**
+ * Probe whether userScripts is actually usable. The docs recommend calling a
+ * no-op method and catching, because `chrome.userScripts` may be defined while
+ * its methods throw "not enabled" on some Chrome versions.
+ */
+export async function probeUserScriptsAvailability(): Promise<UserScriptsAvailability> {
+  const api = getUserScriptsApi();
+  if (!api) {
+    return {
+      available: false,
+      code: 'userScripts_api_missing',
+      hint: 'chrome.userScripts is not available. On Chrome 138+, open chrome://extensions, open Parchi details, and enable "Allow User Scripts". On older Chrome, enable Developer Mode.',
+    };
+  }
+  try {
+    // getScripts() with no args returns all registered scripts; it throws if
+    // the toggle is off even when the API object exists.
+    await api.getScripts();
+    return { available: true };
+  } catch {
+    return {
+      available: false,
+      code: 'userScripts_not_enabled',
+      hint: 'User Scripts toggle is off. On Chrome 138+, open chrome://extensions, open Parchi details, and enable "Allow User Scripts". On older Chrome, enable Developer Mode, then reload the extension.',
+    };
+  }
+}
+
 export function isUserScriptsAvailable(): boolean {
-  const chromeApi = ((globalThis as Record<string, unknown>).chrome ||
-    (typeof chrome !== 'undefined' ? chrome : undefined)) as Record<string, unknown> | undefined;
-  return (
-    typeof chromeApi === 'object' &&
-    chromeApi !== null &&
-    typeof chromeApi.userScripts === 'object' &&
-    chromeApi.userScripts !== null &&
-    typeof (chromeApi.userScripts as Record<string, unknown>).execute === 'function'
-  );
+  return getUserScriptsApi() !== null;
 }
 
 export interface UserScriptsStatus {
@@ -28,143 +106,149 @@ export interface UserScriptsStatus {
   hint?: string;
 }
 
+/**
+ * Synchronous status check (no probe). Use probeUserScriptsAvailability() for
+ * the authoritative async check that distinguishes "API missing" from "toggle off".
+ */
 export function getUserScriptsStatus(): UserScriptsStatus {
-  const chromeApi = ((globalThis as Record<string, unknown>).chrome ||
-    (typeof chrome !== 'undefined' ? chrome : undefined)) as Record<string, unknown> | undefined;
-  if (typeof chromeApi !== 'object' || chromeApi === null || typeof chromeApi.userScripts !== 'object') {
+  const api = getUserScriptsApi();
+  if (!api) {
     return {
       available: false,
       code: 'userScripts_api_missing',
-      hint: 'chrome.userScripts API is not available in this browser. Use selector/text-based tools instead, or switch to Chrome 135+.',
-    };
-  }
-  if (typeof (chromeApi.userScripts as Record<string, unknown>).execute !== 'function') {
-    return {
-      available: false,
-      code: 'userScripts_not_enabled',
-      hint: 'User scripts are not enabled. In Chrome 138+, go to chrome://extensions, find Parchi, and enable "Allow User Scripts". In older versions, enable Developer Mode.',
+      hint: 'chrome.userScripts API is not available in this browser. Use selector/text-based tools instead, or switch to Chrome 135+ and enable "Allow User Scripts".',
     };
   }
   return { available: true };
 }
 
+let worldConfigured = false;
+
 /**
- * Build the JavaScript source to inject for an evaluate() call via userScripts.
- * The injected code runs the user's script in USER_SCRIPT world (CSP-exempt),
- * then serializes the result safely (handles circular refs, Map, Set, Date, etc.).
+ * Configure the USER_SCRIPT world CSP once per service-worker lifetime.
+ * The default USER_SCRIPT CSP forbids eval/Function, which would block the
+ * wrapped evaluate/waitFor payloads. We set a permissive CSP that still
+ * disallows network fetches (connect-src 'none') but allows inline eval so
+ * the injected serializer can run.
  */
-export function buildEvaluateUserScript(userScript: string, args: unknown[]): string {
-  const argsJson = JSON.stringify(args);
-  return `(async () => {
-"use strict";
-const __args = ${argsJson};
-const __fn = async (args) => { ${userScript} };
-let __value;
-try {
-  __value = await __fn(__args);
-} catch (__e) {
-  return { success: false, error: __e instanceof Error ? __e.message : String(__e), code: "script_error" };
-}
-const __toJsonSafe = (v, __seen) => {
-  if (v == null || typeof v === "string" || typeof v === "number" || typeof v === "boolean") return v;
-  if (typeof v === "bigint") return v.toString();
-  if (typeof v === "function") return "[Function]";
-  if (v instanceof Date) return v.toISOString();
-  if (v instanceof RegExp) return String(v);
-  if (v instanceof Error) return { name: v.name, message: v.message, stack: v.stack };
-  if (typeof Node !== "undefined" && v instanceof Node) {
-    if (v instanceof Element) return { nodeType: v.nodeType, tagName: v.tagName, id: v.id || void 0, className: v.className || void 0, textContent: (v.textContent || "").slice(0, 500) };
-    return { nodeType: v.nodeType, textContent: (v.textContent || "").slice(0, 500) };
+async function ensureWorldConfigured(api: UserScriptsExecuteApi): Promise<void> {
+  if (worldConfigured) return;
+  try {
+    await api.configureWorld({
+      csp: "script-src 'self' 'unsafe-eval'; object-src 'none'; connect-src 'none'",
+    });
+    worldConfigured = true;
+  } catch {
+    // configureWorld may throw on older Chrome that doesn't support CSP config;
+    // injection still works with defaults. Stay silent and retry next call would
+    // also throw, so mark configured to avoid repeated noise.
+    worldConfigured = true;
   }
-  if (Array.isArray(v)) return v.map(e => __toJsonSafe(e, __seen));
-  if (v instanceof Map) return Array.from(v.entries()).map(([k, e]) => [__toJsonSafe(k, __seen), __toJsonSafe(e, __seen)]);
-  if (v instanceof Set) return Array.from(v.values()).map(e => __toJsonSafe(e, __seen));
-  if (typeof v === "object") {
-    if (__seen.has(v)) return "[Circular]";
-    __seen.add(v);
-    const __out = {};
-    for (const [__k, __e] of Object.entries(v)) __out[__k] = __toJsonSafe(__e, __seen);
-    __seen.delete(v);
-    return __out;
-  }
-  return String(v);
-};
-return { success: true, result: __toJsonSafe(__value, new WeakSet()) };
-})()`;
 }
 
 /**
- * Build the JavaScript source to inject for a waitFor(script) polling loop via userScripts.
- * The injected code runs the user's script condition in USER_SCRIPT world (CSP-exempt),
- * polling until the condition is truthy or the timeout expires.
+ * Outcome of a userScript injection.
+ *  - On API/toggle failure: { success: false, error, code, hint? }
+ *  - On injection succeeded + script-internal payload: { success: true, result: UserScriptPayload }
+ *  - On injection succeeded but frame reported an error: { success: false, error, code: 'injection_error' }
  */
-export function buildWaitForScriptUserScript(
-  userScript: string,
-  args: unknown[],
-  timeoutMs: number,
-  pollIntervalMs: number,
-): string {
-  const argsJson = JSON.stringify(args);
-  return `(async () => {
-"use strict";
-const __args = ${argsJson};
-const __script = async (args) => { ${userScript} };
-const __timeoutMs = ${timeoutMs};
-const __pollMs = ${pollIntervalMs};
-const __startedAt = Date.now();
-let __attempts = 0;
-const __sleep = (ms) => new Promise(r => setTimeout(r, ms));
-while (Date.now() - __startedAt <= __timeoutMs) {
-  __attempts++;
-  try {
-    const __value = await __script(__args);
-    if (__value) {
-      return { success: true, matchedScript: true, elapsedMs: Date.now() - __startedAt, attempts: __attempts };
-    }
-  } catch (__e) {
-    return { success: false, error: __e instanceof Error ? __e.message : String(__e), code: "script_error", elapsedMs: Date.now() - __startedAt, attempts: __attempts };
-  }
-  await __sleep(__pollMs);
-}
-return { success: false, error: "Timed out waiting for condition.", elapsedMs: Date.now() - __startedAt, attempts: __attempts };
-})()`;
-}
+export type ExecuteUserScriptOutcome =
+  | { success: true; result: UserScriptPayload }
+  | { success: false; error: string; code: string; hint?: string };
 
 /**
  * Execute a user script in a tab using chrome.userScripts.execute (USER_SCRIPT world).
  * This bypasses page CSP restrictions entirely.
+ *
+ * Handles the real InjectionResult shape (Chrome 135+):
+ *  - results[i].result  → the value the script resolved to (our wrapper payload).
+ *  - results[i].error   → per-frame injection error (e.g. "frame was removed").
+ * Multiple frames: returns the first success payload, or the first error.
  */
-export async function executeUserScript<T = unknown>(
-  tabId: number,
-  code: string,
-): Promise<{ success: true; result: T } | { success: false; error: string; code: string; hint?: string }> {
-  const status = getUserScriptsStatus();
-  if (!status.available) {
+export async function executeUserScript(tabId: number, code: string): Promise<ExecuteUserScriptOutcome> {
+  const api = getUserScriptsApi();
+  if (!api) {
+    const status = getUserScriptsStatus();
     return {
       success: false,
       error: status.hint || 'userScripts not available',
       code: status.code || 'userScripts_unavailable',
+      hint: status.hint,
     };
   }
 
+  await ensureWorldConfigured(api);
+
   try {
-    // chrome.userScripts.execute is Chrome 135+; @types/chrome may lag behind.
-    const userScriptsApi = chrome.userScripts as typeof chrome.userScripts & {
-      execute: (injection: {
-        target: { tabId: number };
-        js: Array<{ code: string }>;
-        world?: string;
-      }) => Promise<Array<{ result?: unknown }>>;
-    };
-    const results = await userScriptsApi.execute({
+    const results = await api.execute({
       target: { tabId },
       js: [{ code }],
       world: 'USER_SCRIPT',
     });
-    const raw = results?.[0]?.result;
-    return { success: true, result: raw as T };
+
+    if (!Array.isArray(results) || results.length === 0) {
+      return {
+        success: false,
+        error: 'userScripts.execute returned no frame results.',
+        code: 'userScripts_empty_result',
+        hint: 'The tab may be navigating or on a restricted URL (chrome://, etc.).',
+      };
+    }
+
+    // Prefer the first frame that produced a result; fall back to the first error.
+    for (const entry of results) {
+      if (entry && typeof entry.result !== 'undefined' && entry.result !== null) {
+        const payload = entry.result as UserScriptPayload;
+        // The injected wrapper always returns { success: ... } — pass it through.
+        if (payload && typeof payload === 'object' && typeof payload.success === 'boolean') {
+          return { success: true, result: payload };
+        }
+        // Unexpected shape (user code returned a non-object) — normalize it.
+        return { success: true, result: { success: true, result: payload } };
+      }
+    }
+
+    // No result field on any frame — surface the first per-frame injection error.
+    const errorEntry = results.find((e) => typeof e?.error === 'string');
+    const errorMessage = errorEntry?.error || 'userScripts.execute produced no result.';
+    const lower = errorMessage.toLowerCase();
+    let errCode = 'injection_error';
+    let hint: string | undefined;
+    if (lower.includes('frame') && (lower.includes('removed') || lower.includes('no frame'))) {
+      errCode = 'frame_detached';
+      hint = 'The page may be navigating. Wait briefly and retry.';
+    } else if (lower.includes('cannot access') || lower.includes('url')) {
+      errCode = 'tab_inaccessible';
+      hint = 'The tab may be on a restricted URL (chrome://, etc.).';
+    }
+    return {
+      success: false,
+      error: errorMessage,
+      code: errCode,
+      hint,
+    };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
+    const lower = msg.toLowerCase();
+    // Distinguish "toggle off / not enabled" from a real execution failure.
+    // Chrome throws variations like:
+    //   "Cannot read properties of undefined (reading 'execute')" (toggle off, API undefined)
+    //   "chrome.userScripts is not available" / "userScripts not enabled" / "permission denied"
+    const looksNotEnabled =
+      (lower.includes('userscripts') || lower.includes('user_scripts')) &&
+      (lower.includes('not enabled') ||
+        lower.includes('permission') ||
+        lower.includes('not available') ||
+        lower.includes("reading 'execute'") ||
+        lower.includes('undefined'));
+    if (looksNotEnabled) {
+      return {
+        success: false,
+        error: msg,
+        code: 'userScripts_not_enabled',
+        hint: 'User Scripts toggle is off. On Chrome 138+, open chrome://extensions, open Parchi details, and enable "Allow User Scripts". On older Chrome, enable Developer Mode, then reload the extension.',
+      };
+    }
     return {
       success: false,
       error: msg,
@@ -172,4 +256,11 @@ export async function executeUserScript<T = unknown>(
       hint: 'User script execution failed. Ensure "Allow User Scripts" is enabled for this extension in chrome://extensions.',
     };
   }
+}
+
+/**
+ * Reset the world-configured flag. Exposed for tests so each case starts clean.
+ */
+export function __resetUserScriptsWorldConfigured(): void {
+  worldConfigured = false;
 }

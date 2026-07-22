@@ -60,9 +60,11 @@ import {
 import { runRuntimeProfileRoutingSuite } from './suites/runtime-profile-routing.test.js';
 import { runRuntimeTypesSuite } from './suites/runtime-types.test.js';
 import { runStatePersistenceSuite } from './suites/state-persistence.test.js';
+import { runTabFocusSyncSuite } from './suites/tab-focus-sync.test.js';
 import { runThinkingExtractionSuite } from './suites/thinking-extraction.test.js';
 import { runToolDefinitionsSuite } from './suites/tool-definitions.test.js';
 import { runToolSchemaConversionSuite } from './suites/tool-schema-conversion.test.js';
+import { runUserScriptsInjectionSuite } from './suites/user-scripts-injection.test.js';
 import { runXmlToolParserSuite } from './suites/xml-tool-parser.test.js';
 
 export async function runUnitTests() {
@@ -75,10 +77,12 @@ export async function runUnitTests() {
   await runToolDefinitionsSuite(runner);
   await runMaxSessionTabsSuite(runner);
   await runBrowserEvalSerializationSuite(runner);
+  await runUserScriptsInjectionSuite(runner);
   await runBrowserDebugFirefoxGuardSuite(runner);
   await runBrowserCspHardeningSuite(runner);
   await runBrowserCspClickFallbackSuite(runner);
   await runBrowserCspFieldReportSuite(runner);
+  await runTabFocusSyncSuite(runner);
   await runAiProviderConfigSuite(runner);
   await runToolSchemaConversionSuite(runner);
   await runInputValidationSuite(runner);
