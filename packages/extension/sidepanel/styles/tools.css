@@ -695,12 +695,19 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   padding: 10px 14px;
   margin: 8px 0;
   border: 1px solid rgb(var(--accent-rgb) / 0.25);
   border-radius: 10px;
   background: rgb(var(--accent-rgb) / 0.04);
+  color: inherit;
+  font: inherit;
+  text-align: left;
   cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
   transition: all 150ms ease;
   animation: fadeInUp 0.3s var(--ease-out-expo);
 }
@@ -755,7 +762,7 @@
   border: 1px solid var(--ink-2);
   background: transparent;
   color: var(--accent);
-  cursor: pointer;
+  pointer-events: none; /* whole card is the hit target */
   flex-shrink: 0;
   transition: all 150ms ease;
 }

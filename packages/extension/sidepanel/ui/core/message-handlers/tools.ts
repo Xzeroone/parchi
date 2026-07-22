@@ -134,11 +134,16 @@ export const handleCreateFile = function handleCreateFile(this: SidePanelUI & Re
   const mimeType = String(message.mimeType || 'text/plain');
   const sizeKb = Math.max(1, Math.round(new TextEncoder().encode(content).byteLength / 1024));
 
-  const card = document.createElement('div');
+  // Use a real button so the whole card is keyboard-activatable and not
+  // swallowed by parent pointer-event / form default quirks.
+  const card = document.createElement('button');
+  card.type = 'button';
   card.className = 'file-artifact-card';
+  card.setAttribute('aria-label', `Download ${filename}`);
+  card.title = `Download ${filename}`;
   this.tagAgentView?.(card, 'main');
   card.innerHTML = `
-    <div class="file-artifact-icon">
+    <div class="file-artifact-icon" aria-hidden="true">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
         <polyline points="14 2 14 8 20 8"/>
@@ -150,23 +155,23 @@ export const handleCreateFile = function handleCreateFile(this: SidePanelUI & Re
       <span class="file-artifact-name">${this.escapeHtml(filename)}</span>
       <span class="file-artifact-meta">${this.escapeHtml(mimeType)} · ${sizeKb} KB</span>
     </div>
-    <button class="file-artifact-download" title="Download">
+    <span class="file-artifact-download" aria-hidden="true">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
         <polyline points="7 10 12 15 17 10"/>
         <line x1="12" y1="15" x2="12" y2="3"/>
       </svg>
-    </button>
+    </span>
   `;
 
-  card.querySelector('.file-artifact-download')?.addEventListener('click', () => {
+  const startDownload = (e?: Event) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     this.downloadFile(content, filename, mimeType);
-  });
-  // Also allow clicking the whole card
-  card.addEventListener('click', (e: Event) => {
-    if (!(e.target as HTMLElement).closest('.file-artifact-download')) {
-      this.downloadFile(content, filename, mimeType);
-    }
+  };
+  card.addEventListener('click', startDownload);
+  card.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') startDownload(e);
   });
 
   const streamEventsEl = this.streamingState?.eventsEl;

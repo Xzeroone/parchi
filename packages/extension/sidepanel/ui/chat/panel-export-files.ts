@@ -73,19 +73,33 @@ sidePanelProto.extractTextContent = function extractTextContent(content: unknown
 };
 
 sidePanelProto.downloadFile = function downloadFile(content: string, filename: string, mimeType: string): void {
-  const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
+  // Sidepanel-first: blob + anchor is reliable in extension pages and is synchronous from the
+  // user's click (no message-port race with the service worker).
+  try {
+    const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.rel = 'noopener';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      link.remove();
+      URL.revokeObjectURL(url);
+    }, 1000);
+    return;
+  } catch {
+    // Fall through to background chrome.downloads
+  }
 
-  setTimeout(() => {
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, 100);
+  chrome.runtime.sendMessage({
+    type: 'download_file',
+    content,
+    filename,
+    mimeType,
+  });
 };
 
 sidePanelProto.downloadMarkdown = function downloadMarkdown(content: string, filename: string): void {
