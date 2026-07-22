@@ -17,6 +17,7 @@ import { runBrowserDebugFirefoxGuardSuite } from './suites/browser-debug-firefox
 import { runBrowserEvalSerializationSuite } from './suites/browser-eval-serialization.test.js';
 import { runXaiOauthConfigSuite } from './suites/codex-oauth-config.test.js';
 import { runConversationCompactionSuite } from './suites/conversation-compaction.test.js';
+import { runDownloadFileSuite } from './suites/download-file.test.js';
 import { runErrorHandlingSuite } from './suites/error-handling.test.js';
 import { runInputValidationSuite } from './suites/input-validation.test.js';
 import { runJsonRpcMutualExclusivitySuite } from './suites/json-rpc/mutual-exclusivity.test.js';
@@ -78,6 +79,7 @@ export async function runUnitTests() {
   await runToolSchemaConversionSuite(runner);
   await runInputValidationSuite(runner);
   await runErrorHandlingSuite(runner);
+  await runDownloadFileSuite(runner);
   await runApiErrorClassificationSuite(runner);
   await runOauthModelNormalizationSuite(runner);
   await runOauthProfileContextSyncSuite(runner);

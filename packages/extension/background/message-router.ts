@@ -1,4 +1,5 @@
 import { handleCompactContext, handleUserMessage } from './message-handlers/core.js';
+import { handleDownloadFile } from './message-handlers/download.js';
 import {
   handleRecordingDiscard,
   handleRecordingEvent,
@@ -47,6 +48,7 @@ const HANDLERS: Record<
   content_perf_event: handleContentPerfEvent,
   content_script_ready: handleContentScriptReady,
   reset_all_profiles: handleResetAllProfiles,
+  download_file: handleDownloadFile,
 };
 
 export async function handleMessage(

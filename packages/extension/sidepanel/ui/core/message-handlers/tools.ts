@@ -164,19 +164,19 @@ export const handleCreateFile = function handleCreateFile(this: SidePanelUI & Re
     </span>
   `;
 
-  const startDownload = (e?: Event) => {
-    e?.preventDefault?.();
-    e?.stopPropagation?.();
+  card.addEventListener('click', (e: Event) => {
+    e.preventDefault();
+    e.stopPropagation();
     this.downloadFile(content, filename, mimeType);
-  };
-  card.addEventListener('click', startDownload);
-  card.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') startDownload(e);
   });
+  // Native <button> already activates on Enter/Space — do not double-bind keydown.
 
-  const streamEventsEl = this.streamingState?.eventsEl;
-  if (streamEventsEl) {
-    streamEventsEl.appendChild(card);
+  // Place outside .stream-events so timeline collapse cannot hide the card.
+  // Prefer as a sibling after the streaming assistant message, else chat root.
+  const streamContainer = this.streamingState?.container as HTMLElement | undefined | null;
+  const parent = streamContainer?.parentElement;
+  if (parent && streamContainer) {
+    parent.insertBefore(card, streamContainer.nextSibling);
   } else if (this.elements.chatMessages) {
     this.elements.chatMessages.appendChild(card);
   }

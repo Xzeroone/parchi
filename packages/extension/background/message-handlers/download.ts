@@ -5,9 +5,8 @@
 
 import type { ServiceContext } from '../service-context.js';
 
-function contentToDataUrl(content: string, mimeType: string): string {
-  // Prefer base64 data URL so we don't rely on FileReader (which races with
-  // the message-router's "must respond before return" contract).
+/** Build a base64 data URL for chrome.downloads (no FileReader / async race). */
+export function contentToDataUrl(content: string, mimeType: string): string {
   const bytes = new TextEncoder().encode(content);
   let binary = '';
   const chunk = 0x8000;
