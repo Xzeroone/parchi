@@ -7,8 +7,13 @@ import {
   classifyFileKind,
   createAttachmentId,
   formatByteSize,
+  isExtractableDocument,
+  isHtmlFile,
+  isLegacyOfficeDocument,
   mergeAttachmentCap,
+  prepareHtmlAttachmentText,
 } from './file-attachment-utils.js';
+import { extractDocumentText } from './file-document-extract.js';
 
 const sidePanelProto = SidePanelUI.prototype as SidePanelUI & Record<string, unknown>;
 
@@ -74,22 +79,104 @@ sidePanelProto.ingestFilesIntoComposer = async function ingestFilesIntoComposer(
         const raw = await file.text();
         const remaining = Math.max(0, MAX_TOTAL_TEXT_CHARS - totalTextChars);
         const cap = Math.min(MAX_TEXT_CHARS_PER_FILE, remaining);
-        const truncated = raw.length > cap;
-        const text = truncated ? raw.slice(0, cap) : raw;
-        totalTextChars += text.length;
-        added.push({
-          id: createAttachmentId(),
-          kind: 'text',
-          name,
-          mimeType: mime || 'text/plain',
-          size,
-          text,
-          truncated,
-        });
+        if (isHtmlFile(name, mime)) {
+          const prepared = prepareHtmlAttachmentText(raw, cap);
+          totalTextChars += prepared.text.length;
+          added.push({
+            id: createAttachmentId(),
+            kind: 'text',
+            name,
+            mimeType: mime || 'text/html',
+            size,
+            text: prepared.text,
+            truncated: prepared.truncated,
+            note: prepared.note,
+          });
+        } else {
+          const truncated = raw.length > cap;
+          const text = truncated ? raw.slice(0, cap) : raw;
+          totalTextChars += text.length;
+          added.push({
+            id: createAttachmentId(),
+            kind: 'text',
+            name,
+            mimeType: mime || 'text/plain',
+            size,
+            text,
+            truncated,
+          });
+        }
       } catch (e) {
         console.warn('Failed to read text file', name, e);
         skipped += 1;
       }
+      continue;
+    }
+
+    // PDF / modern Office: extract text client-side for model context.
+    if (isExtractableDocument(name, mime)) {
+      if (totalTextChars >= MAX_TOTAL_TEXT_CHARS) {
+        added.push({
+          id: createAttachmentId(),
+          kind: 'file',
+          name,
+          mimeType: mime || 'application/octet-stream',
+          size,
+          note: 'Attachment text budget reached; content not extracted',
+        });
+        continue;
+      }
+      try {
+        const remaining = Math.max(0, MAX_TOTAL_TEXT_CHARS - totalTextChars);
+        const cap = Math.min(MAX_TEXT_CHARS_PER_FILE, remaining);
+        const buffer = await file.arrayBuffer();
+        const result = await extractDocumentText(buffer, name, mime, cap);
+        if (result.ok) {
+          const truncated = result.text.length >= cap;
+          totalTextChars += result.text.length;
+          added.push({
+            id: createAttachmentId(),
+            kind: 'text',
+            name,
+            mimeType: mime || 'application/octet-stream',
+            size,
+            text: result.text,
+            truncated,
+            note: 'extracted text',
+          });
+        } else {
+          added.push({
+            id: createAttachmentId(),
+            kind: 'file',
+            name,
+            mimeType: mime || 'application/octet-stream',
+            size,
+            note: result.error,
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to extract document', name, e);
+        added.push({
+          id: createAttachmentId(),
+          kind: 'file',
+          name,
+          mimeType: mime || 'application/octet-stream',
+          size,
+          note: `Extraction failed: ${e instanceof Error ? e.message : String(e)}`,
+        });
+      }
+      continue;
+    }
+
+    if (isLegacyOfficeDocument(name, mime)) {
+      added.push({
+        id: createAttachmentId(),
+        kind: 'file',
+        name,
+        mimeType: mime || 'application/octet-stream',
+        size,
+        note: 'Legacy .doc/.xls/.ppt not extracted; convert to .docx/.xlsx/.pptx',
+      });
       continue;
     }
 

@@ -20,11 +20,13 @@ import { runConversationCompactionSuite } from './suites/conversation-compaction
 import { runDownloadFileSuite } from './suites/download-file.test.js';
 import { runErrorHandlingSuite } from './suites/error-handling.test.js';
 import { runFileAttachmentUtilsSuite } from './suites/file-attachment-utils.test.js';
+import { runFileDocumentExtractSuite } from './suites/file-document-extract.test.js';
 import { runInputValidationSuite } from './suites/input-validation.test.js';
 import { runJsonRpcMutualExclusivitySuite } from './suites/json-rpc/mutual-exclusivity.test.js';
 import { runJsonRpcNotificationSuite } from './suites/json-rpc/notification.test.js';
 import { runJsonRpcRequestSuite } from './suites/json-rpc/request.test.js';
 import { runJsonRpcResponseSuite } from './suites/json-rpc/response.test.js';
+import { runMaxSessionTabsSuite } from './suites/max-session-tabs.test.js';
 import { runMessageSchemaSuite } from './suites/message-schema.test.js';
 import { runMessageUtilsSuite } from './suites/message-utils.test.js';
 import { runModelCapabilitiesSuite } from './suites/model-capabilities.test.js';
@@ -71,6 +73,7 @@ export async function runUnitTests() {
   const runner = new TestRunner();
 
   await runToolDefinitionsSuite(runner);
+  await runMaxSessionTabsSuite(runner);
   await runBrowserEvalSerializationSuite(runner);
   await runBrowserDebugFirefoxGuardSuite(runner);
   await runBrowserCspHardeningSuite(runner);
@@ -82,6 +85,7 @@ export async function runUnitTests() {
   await runErrorHandlingSuite(runner);
   await runDownloadFileSuite(runner);
   await runFileAttachmentUtilsSuite(runner);
+  await runFileDocumentExtractSuite(runner);
   await runApiErrorClassificationSuite(runner);
   await runOauthModelNormalizationSuite(runner);
   await runOauthProfileContextSyncSuite(runner);

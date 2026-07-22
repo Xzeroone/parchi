@@ -171,6 +171,14 @@ const run = async () => {
   copyDirFiltered(path.join(extensionRoot, 'sidepanel', 'styles'), path.join(distDir, 'sidepanel', 'styles'));
   copyDirFiltered(path.join(extensionRoot, 'sidepanel', 'templates'), path.join(distDir, 'sidepanel', 'templates'));
   copyDirFiltered(path.join(extensionRoot, 'icons'), path.join(distDir, 'icons'));
+
+  // PDF.js worker for client-side PDF text extraction in the sidepanel (PAR-60).
+  const pdfWorkerSrc = path.join(rootDir, 'node_modules', 'pdfjs-dist', 'legacy', 'build', 'pdf.worker.min.mjs');
+  if (fs.existsSync(pdfWorkerSrc)) {
+    copyFile(pdfWorkerSrc, path.join(distDir, 'sidepanel', 'pdf.worker.min.mjs'));
+  } else {
+    console.warn('⚠ pdfjs-dist worker not found; PDF attachment extraction may fall back to fake worker');
+  }
 };
 
 run().catch((error) => {

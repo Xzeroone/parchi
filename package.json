@@ -70,6 +70,8 @@
     "@convex-dev/auth": "0.0.90",
     "ai": "6.0.42",
     "convex": "1.31.7",
+    "jszip": "^3.10.1",
+    "pdfjs-dist": "^5.7.284",
     "stripe": "18.5.0"
   },
   "lint-staged": {
