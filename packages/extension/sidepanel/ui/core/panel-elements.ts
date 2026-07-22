@@ -225,6 +225,7 @@ export const getSidePanelElements = (): SidePanelElements => ({
   modelSelectorList: byId<HTMLElement>('modelSelectorList'),
   fileBtn: byIdAny<HTMLButtonElement>('fileBtn', 'composerActionAttachFile'),
   fileInput: byId<HTMLInputElement>('fileInput'),
+  composerAttachments: byId<HTMLElement>('composerAttachments'),
   zoomOutBtn: byId<HTMLButtonElement>('zoomOutBtn'),
   zoomInBtn: byId<HTMLButtonElement>('zoomInBtn'),
   zoomResetBtn: byId<HTMLButtonElement>('zoomResetBtn'),

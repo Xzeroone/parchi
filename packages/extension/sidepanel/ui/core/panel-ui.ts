@@ -135,6 +135,7 @@ export class SidePanelUI {
   _currentVerb: string | null;
   recordingState: { status: 'idle' | 'recording' | 'selecting'; elapsedMs: number; timerId: number | null };
   pendingRecordedContext: RecordedContext | null;
+  pendingComposerAttachments: any[];
   reviewState: {
     events: import('@parchi/shared').RecordingEvent[];
     screenshots: import('@parchi/shared').RecordingScreenshot[];
@@ -264,6 +265,7 @@ export class SidePanelUI {
     this._currentVerb = null;
     this.recordingState = { status: 'idle', elapsedMs: 0, timerId: null };
     this.pendingRecordedContext = null;
+    this.pendingComposerAttachments = [];
     this.reviewState = null;
     this.reportImages = new Map();
     this.reportImageOrder = [];

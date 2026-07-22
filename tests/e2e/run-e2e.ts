@@ -326,7 +326,15 @@ test('Pasting media into the composer attaches it', async ({ panel }) => {
     const input = document.getElementById('userInput') as HTMLTextAreaElement | null;
     if (!input) throw new Error('Missing user input');
     input.value = '';
-    const ui = (window as Window & { sidePanelUI?: { pendingComposerAttachments?: unknown[] } }).sidePanelUI;
+    const ui = (
+      window as Window & {
+        sidePanelUI?: {
+          pendingComposerAttachments?: unknown[];
+          clearComposerAttachments?: () => void;
+        };
+      }
+    ).sidePanelUI;
+    ui?.clearComposerAttachments?.();
     if (ui) ui.pendingComposerAttachments = [];
 
     const data = new DataTransfer();
@@ -341,13 +349,20 @@ test('Pasting media into the composer attaches it', async ({ panel }) => {
 
   await panel.waitForFunction(
     () => {
-      const win = window as Window & { sidePanelUI?: { pendingComposerAttachments?: Array<{ name?: string }> } };
+      const win = window as Window & {
+        sidePanelUI?: { pendingComposerAttachments?: Array<{ name?: string; kind?: string }> };
+      };
       const attachments = win.sidePanelUI?.pendingComposerAttachments || [];
-      const input = document.getElementById('userInput') as HTMLTextAreaElement | null;
+      const chips = document.getElementById('composerAttachments');
+      const chipVisible =
+        chips &&
+        !chips.classList.contains('hidden') &&
+        chips.querySelectorAll('.composer-attachment-chip').length === 1;
       return (
         attachments.length === 1 &&
         attachments[0]?.name === 'clipboard-image.png' &&
-        !!input?.value.includes('[Attached image: clipboard-image.png]')
+        attachments[0]?.kind === 'image' &&
+        !!chipVisible
       );
     },
     { timeout: timeoutMs },
@@ -358,6 +373,45 @@ test('Pasting media into the composer attaches it', async ({ panel }) => {
     return win.sidePanelUI?.pendingComposerAttachments?.length || 0;
   });
   assert(attachmentCount === 1, 'Expected one pasted media attachment.');
+});
+
+test('Text file attach inlines content into pending attachment chips', async ({ panel }) => {
+  await panel.evaluate(async () => {
+    const ui = (
+      window as Window & {
+        sidePanelUI?: {
+          pendingComposerAttachments?: unknown[];
+          clearComposerAttachments?: () => void;
+          ingestFilesIntoComposer?: (files: File[], source?: string) => Promise<void>;
+        };
+      }
+    ).sidePanelUI;
+    if (!ui?.ingestFilesIntoComposer) throw new Error('Missing ingestFilesIntoComposer');
+    ui.clearComposerAttachments?.();
+    const file = new File(['# hello context'], 'notes.md', { type: 'text/markdown' });
+    await ui.ingestFilesIntoComposer([file], 'picker');
+  });
+
+  await panel.waitForFunction(
+    () => {
+      const win = window as Window & {
+        sidePanelUI?: {
+          pendingComposerAttachments?: Array<{ name?: string; kind?: string; text?: string }>;
+        };
+      };
+      const attachments = win.sidePanelUI?.pendingComposerAttachments || [];
+      const chips = document.getElementById('composerAttachments');
+      return (
+        attachments.length === 1 &&
+        attachments[0]?.name === 'notes.md' &&
+        attachments[0]?.kind === 'text' &&
+        attachments[0]?.text === '# hello context' &&
+        !!chips &&
+        !chips.classList.contains('hidden')
+      );
+    },
+    { timeout: timeoutMs },
+  );
 });
 
 test('Settings sidebar opens and provider grids render', async ({ panel }) => {

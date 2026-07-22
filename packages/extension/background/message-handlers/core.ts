@@ -19,6 +19,7 @@ export function handleUserMessage(ctx: ServiceContext, message: any, sendRespons
     sessionId,
     undefined,
     message.recordedContext,
+    Array.isArray(message.attachments) ? message.attachments : undefined,
   );
 }
 

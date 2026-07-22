@@ -22,6 +22,7 @@ export async function processUserMessage(
   sessionId: string,
   meta?: Partial<RunMeta> & { origin?: 'sidepanel' },
   recordedContext?: RecordedContext,
+  attachments?: Array<{ kind?: string; dataUrl?: string; name?: string }>,
 ) {
   const runMeta = createRunMeta(sessionId, meta);
   const origin = meta?.origin || 'sidepanel';
@@ -46,6 +47,7 @@ export async function processUserMessage(
       selectedTabs,
       recordedContext,
       diagnostics,
+      attachments,
     );
     if ('blocked' in preparedOrBlocked) {
       ctx.sendRuntime(runMeta, {

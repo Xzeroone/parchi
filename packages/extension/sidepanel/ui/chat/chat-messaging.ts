@@ -2,6 +2,7 @@ import { createMessage } from '../../../ai/messages/schema.js';
 import { getActiveTab } from '../../../utils/active-tab.js';
 import { clampContextHistory } from '../core/panel-session-memory.js';
 import { SidePanelUI } from '../core/panel-ui.js';
+import { type ComposerAttachment, formatAttachmentContext } from '../tabs/file-attachment-utils.js';
 import { MAX_DISPLAY_HISTORY, sanitizeForMessaging, sendRuntimeMessageWithRetry } from './chat-utils.js';
 import { appendTrace } from './trace-store.js';
 
@@ -52,8 +53,16 @@ sidePanelProto.sendMessage = async function sendMessage() {
     this.updateStatus('Switch back to the orchestrator tab to send a new message.', 'warning');
     return;
   }
-  const userMessage = this.elements.userInput.value.trim();
-  if (!userMessage) return;
+  const attachmentsForMessage: ComposerAttachment[] = Array.isArray(this.pendingComposerAttachments)
+    ? [...this.pendingComposerAttachments]
+    : [];
+  const typedMessage = this.elements.userInput.value.trim();
+  if (!typedMessage && attachmentsForMessage.length === 0) return;
+  const userMessage =
+    typedMessage ||
+    (attachmentsForMessage.length === 1
+      ? `Please review the attached file: ${attachmentsForMessage[0]?.name || 'attachment'}`
+      : `Please review the ${attachmentsForMessage.length} attached files.`);
 
   this.pendingTurnDraft = { userMessage, startedAt: Date.now() };
 
@@ -122,11 +131,11 @@ sidePanelProto.sendMessage = async function sendMessage() {
           : [],
       }
     : null;
-  const mediaAttachmentsForMessage = Array.isArray(this.pendingComposerAttachments)
-    ? [...this.pendingComposerAttachments]
-    : [];
+  const attachmentContext = formatAttachmentContext(attachmentsForMessage);
+  const fullMessageWithAttachments = fullMessage + attachmentContext;
 
-  this.displayUserMessage(userMessage, recordedContextForMessage, mediaAttachmentsForMessage);
+  this.displayUserMessage(userMessage, recordedContextForMessage, attachmentsForMessage);
+  this.clearComposerAttachments?.();
 
   const displayEntry = createMessage({ role: 'user', content: userMessage });
   if (displayEntry) {
@@ -136,7 +145,7 @@ sidePanelProto.sendMessage = async function sendMessage() {
     }
   }
 
-  const contextEntry = createMessage({ role: 'user', content: fullMessage });
+  const contextEntry = createMessage({ role: 'user', content: fullMessageWithAttachments });
   if (contextEntry) {
     this.contextHistory.push(contextEntry);
     clampContextHistory(this.contextHistory);
@@ -153,7 +162,7 @@ sidePanelProto.sendMessage = async function sendMessage() {
     const sendableHistory = this.getSendableContextHistory?.() || sanitizeForMessaging(this.contextHistory || []);
     const payload: Record<string, unknown> = {
       type: 'user_message',
-      message: fullMessage,
+      message: fullMessageWithAttachments,
       conversationHistory: sendableHistory,
       selectedTabs: selectedTabsPayload,
       sessionId: this.sessionId,
@@ -163,9 +172,18 @@ sidePanelProto.sendMessage = async function sendMessage() {
       this.pendingRecordedContext = null;
       this.hideRecordedContextBadge?.();
     }
-    if (mediaAttachmentsForMessage.length > 0) {
-      payload.attachments = mediaAttachmentsForMessage;
-      this.pendingComposerAttachments = [];
+    if (attachmentsForMessage.length > 0) {
+      // Media dataUrls + metadata; text content is already inlined in message/history.
+      payload.attachments = attachmentsForMessage.map((a) => ({
+        kind: a.kind,
+        name: a.name,
+        mimeType: a.mimeType,
+        size: a.size,
+        dataUrl: a.dataUrl,
+        // Omit full text payload on the wire — already in message content.
+        truncated: a.truncated,
+        note: a.note,
+      }));
     }
     const response = await sendRuntimeMessageWithRetry(payload);
     if (response?.sessionId && typeof response.sessionId === 'string') {
@@ -180,6 +198,7 @@ sidePanelProto.sendMessage = async function sendMessage() {
     this.pendingTurnDraft = null;
     this.pendingRecordedContext = null;
     this.hideRecordedContextBadge?.();
+    // Attachments already cleared after display; user can re-attach if needed.
     const message = error instanceof Error ? error.message : String(error ?? '');
     this.updateStatus('Error: ' + message, 'error');
     this.elements.composer?.classList.remove('running');

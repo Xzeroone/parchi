@@ -19,6 +19,7 @@ import { runXaiOauthConfigSuite } from './suites/codex-oauth-config.test.js';
 import { runConversationCompactionSuite } from './suites/conversation-compaction.test.js';
 import { runDownloadFileSuite } from './suites/download-file.test.js';
 import { runErrorHandlingSuite } from './suites/error-handling.test.js';
+import { runFileAttachmentUtilsSuite } from './suites/file-attachment-utils.test.js';
 import { runInputValidationSuite } from './suites/input-validation.test.js';
 import { runJsonRpcMutualExclusivitySuite } from './suites/json-rpc/mutual-exclusivity.test.js';
 import { runJsonRpcNotificationSuite } from './suites/json-rpc/notification.test.js';
@@ -80,6 +81,7 @@ export async function runUnitTests() {
   await runInputValidationSuite(runner);
   await runErrorHandlingSuite(runner);
   await runDownloadFileSuite(runner);
+  await runFileAttachmentUtilsSuite(runner);
   await runApiErrorClassificationSuite(runner);
   await runOauthModelNormalizationSuite(runner);
   await runOauthProfileContextSyncSuite(runner);

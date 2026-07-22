@@ -108,10 +108,11 @@
                             <span class="recorded-context-label">Recording attached</span>
                             <button id="recordedContextRemove" class="recorded-context-remove">&times;</button>
                         </div>
+                        <div id="composerAttachments" class="composer-attachments hidden" aria-label="Pending attachments"></div>
                         <div id="composer" class="composer content-column">
                             <textarea
                                 id="userInput"
-                                placeholder="Message..."
+                                placeholder="Message... (attach or drop files for context)"
                                 rows="1"
                             ></textarea>
                             <div class="composer-toolbar">
@@ -143,7 +144,6 @@
                                         id="fileInput"
                                         type="file"
                                         multiple
-                                        accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.md,.txt,.csv,.json,.log,.xml,.yaml,.yml,.zip,.7z,.tar,.gz,.webp,.heic,.heif,.mp4,.mov,.avi,.mkv,.mp3,.wav,.m4a"
                                         class="hidden"
                                     />
                                     <div class="composer-tools">

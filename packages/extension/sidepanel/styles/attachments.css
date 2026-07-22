@@ -1,0 +1,103 @@
+/* Composer pending attachments + user-message attachment blocks */
+
+.composer-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 2px 6px;
+}
+
+.composer-attachments.hidden {
+  display: none;
+}
+
+.composer-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 6px 3px 8px;
+  border-radius: 9999px;
+  border: 1px solid var(--ink-1);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.composer-attachment-kind {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-light, var(--muted));
+  font-family: var(--font-mono, monospace);
+}
+
+.composer-attachment-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+}
+
+.composer-attachment-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted-dim);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.composer-attachment-remove:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--foreground);
+}
+
+.composer.drag-over {
+  border-color: rgb(var(--accent-rgb) / 0.55);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.25);
+}
+
+.user-attachments-block {
+  margin-top: 8px;
+  border: 1px solid var(--ink-1);
+  border-radius: 8px;
+  background: rgb(var(--accent-rgb) / 0.04);
+  overflow: hidden;
+}
+
+.user-attachments-block > summary {
+  cursor: pointer;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--muted);
+  list-style: none;
+}
+
+.user-attachments-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.user-attachments-list {
+  margin: 0;
+  padding: 0 10px 8px 24px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.user-attachments-list li {
+  margin: 2px 0;
+  word-break: break-word;
+}

@@ -86,6 +86,37 @@ export const setupComposerListeners = function setupComposerListeners(this: Side
     void this.ingestFilesIntoComposer?.(files, 'paste');
   });
 
+  // Drag-and-drop files onto the composer
+  const dropTarget = (this.elements.composer as HTMLElement | null) || this.elements.userInput;
+  if (dropTarget) {
+    const setDragOver = (active: boolean) => {
+      this.elements.composer?.classList.toggle('drag-over', active);
+    };
+    dropTarget.addEventListener('dragenter', (event: DragEvent) => {
+      if (!event.dataTransfer?.types?.includes('Files')) return;
+      event.preventDefault();
+      setDragOver(true);
+    });
+    dropTarget.addEventListener('dragover', (event: DragEvent) => {
+      if (!event.dataTransfer?.types?.includes('Files')) return;
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+      setDragOver(true);
+    });
+    dropTarget.addEventListener('dragleave', (event: DragEvent) => {
+      const related = event.relatedTarget as Node | null;
+      if (related && dropTarget.contains(related)) return;
+      setDragOver(false);
+    });
+    dropTarget.addEventListener('drop', (event: DragEvent) => {
+      event.preventDefault();
+      setDragOver(false);
+      const files = Array.from(event.dataTransfer?.files || []).filter((f): f is File => f instanceof File);
+      if (!files.length) return;
+      void this.ingestFilesIntoComposer?.(files, 'drop');
+    });
+  }
+
   // Auto-expand textarea height as user types
   const userInput = this.elements.userInput;
   userInput?.addEventListener('input', () => {
@@ -154,6 +185,7 @@ function removeQueuedMessageBanner(this: SidePanelUI & Record<string, unknown>) 
 function handleSendButtonClick(this: SidePanelUI & Record<string, unknown>) {
   const isRunning = this.elements.composer?.classList.contains('running');
   const hasText = this.elements.userInput?.value.trim();
+  const hasAttachments = Array.isArray(this.pendingComposerAttachments) && this.pendingComposerAttachments.length > 0;
 
   if (isRunning && hasText) {
     // Queue the message — it will send after the current turn completes
@@ -182,7 +214,7 @@ function handleSendButtonClick(this: SidePanelUI & Record<string, unknown>) {
     this.insertStoppedDivider();
     this.updateStatus('Stopped', 'warning');
     removeQueuedMessageBanner.call(this);
-  } else {
+  } else if (hasText || hasAttachments) {
     this.sendMessage();
   }
 }

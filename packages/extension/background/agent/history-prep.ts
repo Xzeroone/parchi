@@ -2,10 +2,17 @@ import { normalizeConversationHistory } from '../../ai/messages/schema.js';
 import type { Message } from '../../ai/messages/schema.js';
 import type { RecordedContext } from './agent-loop/shared.js';
 
+export type MessageAttachment = {
+  kind?: string;
+  dataUrl?: string;
+  name?: string;
+};
+
 export function prepareConversationHistory(
   userMessage: string,
   conversationHistory: Message[],
   recordedContext?: RecordedContext,
+  attachments?: MessageAttachment[],
 ) {
   const historyInput = Array.isArray(conversationHistory) ? conversationHistory : [];
   const trimmedUserMessage = typeof userMessage === 'string' ? userMessage.trim() : '';
@@ -16,6 +23,15 @@ export function prepareConversationHistory(
     enrichedUserMessage = `${userMessage}\n\n${recordedContext.summary}`;
     if (Array.isArray(recordedContext.selectedImages)) {
       recordedImages = recordedContext.selectedImages;
+    }
+  }
+
+  // Sidepanel image attachments (picker/paste/drop) → same vision path as recording frames.
+  if (Array.isArray(attachments)) {
+    for (const attachment of attachments) {
+      if (attachment?.kind !== 'image') continue;
+      if (typeof attachment.dataUrl !== 'string' || !attachment.dataUrl) continue;
+      recordedImages.push({ dataUrl: attachment.dataUrl });
     }
   }
 

@@ -24,6 +24,7 @@ export async function prepareAgentLoopRun(
   selectedTabs: chrome.tabs.Tab[],
   recordedContext: RecordedContext,
   diagnostics: AgentLoopDiagnostics,
+  attachments?: Array<{ kind?: string; dataUrl?: string; name?: string }>,
 ): Promise<PreparedAgentLoopRun | PreparedAgentLoopBlocked> {
   const sessionState = ctx.getSessionState(sessionId);
   const browserTools = ctx.getBrowserTools(sessionId);
@@ -65,7 +66,7 @@ export async function prepareAgentLoopRun(
     showThinking,
   );
   const matchedSkillsResult = await getMatchedSkills(String(context.currentUrl || ''));
-  const preparedHistory = prepareConversationHistory(userMessage, conversationHistory, recordedContext);
+  const preparedHistory = prepareConversationHistory(userMessage, conversationHistory, recordedContext, attachments);
 
   emitHistoryPrepared(ctx, runMeta, sessionState, preparedHistory);
 

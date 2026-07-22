@@ -191,8 +191,18 @@ export class BackgroundService implements ServiceContext {
     sessionId: string,
     meta?: Partial<RunMeta> & { origin?: 'sidepanel' },
     recordedContext?: any,
+    attachments?: any[],
   ) {
-    return processUserMessage(this, userMessage, conversationHistory, selectedTabs, sessionId, meta, recordedContext);
+    return processUserMessage(
+      this,
+      userMessage,
+      conversationHistory,
+      selectedTabs,
+      sessionId,
+      meta,
+      recordedContext,
+      attachments,
+    );
   }
 
   async processContextCompaction(

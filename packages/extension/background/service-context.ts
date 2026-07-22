@@ -62,6 +62,7 @@ export type ServiceContext = {
     sessionId: string,
     meta?: Partial<RunMeta> & { origin?: 'sidepanel' },
     recordedContext?: any,
+    attachments?: any[],
   ): Promise<void>;
 
   processContextCompaction(

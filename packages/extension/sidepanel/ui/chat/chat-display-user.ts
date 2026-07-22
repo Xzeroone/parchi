@@ -100,14 +100,17 @@ function buildMediaHtml(self: SidePanelUI, mediaAttachments: unknown[]): string 
       const name = String(a?.name || `${kind}-attachment`);
       const mimeType = String(a?.mimeType || '');
       const size = Number(a?.size || 0);
-      const kb = Math.max(1, Math.round(size / 1024));
-      return `<li>${self.escapeHtml(`${kind.toUpperCase()}: ${name} (${mimeType || 'unknown'}, ${kb} KB)`)}</li>`;
+      const kb = size < 1024 ? `${size} B` : `${Math.max(1, Math.round(size / 1024))} KB`;
+      const extra =
+        kind === 'text' && a?.truncated ? ' · truncated' : kind === 'file' && a?.note ? ` · ${String(a.note)}` : '';
+      return `<li>${self.escapeHtml(`${kind.toUpperCase()}: ${name} (${mimeType || 'unknown'}, ${kb})${extra}`)}</li>`;
     })
     .join('');
 
+  const label = attachments.length === 1 ? '1 file attached' : `${attachments.length} files attached`;
   return `
-      <details class="user-attachments-block">
-        <summary>Media attached · ${attachments.length}</summary>
+      <details class="user-attachments-block" open>
+        <summary>${label}</summary>
         <ul class="user-attachments-list">${rows}</ul>
       </details>
     `;
