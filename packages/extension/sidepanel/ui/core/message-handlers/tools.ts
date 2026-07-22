@@ -126,6 +126,15 @@ export const handleToolResult = function handleToolResult(this: SidePanelUI & Re
 sidePanelProto.handleToolResult = handleToolResult;
 
 /**
+ * Build a self-contained object URL for a create_file download card.
+ * Kept pure so unit tests can assert hyperlink semantics without DOM UI.
+ */
+export function buildFileArtifactObjectUrl(content: string, mimeType: string): string {
+  const safeMime = mimeType.includes(';') ? mimeType : `${mimeType};charset=utf-8`;
+  return URL.createObjectURL(new Blob([content], { type: safeMime }));
+}
+
+/**
  * Handle create_file messages — render a download card in the chat
  */
 export const handleCreateFile = function handleCreateFile(this: SidePanelUI & Record<string, unknown>, message: any) {
@@ -134,10 +143,13 @@ export const handleCreateFile = function handleCreateFile(this: SidePanelUI & Re
   const mimeType = String(message.mimeType || 'text/plain');
   const sizeKb = Math.max(1, Math.round(new TextEncoder().encode(content).byteLength / 1024));
 
-  // Use a real button so the whole card is keyboard-activatable and not
-  // swallowed by parent pointer-event / form default quirks.
-  const card = document.createElement('button');
-  card.type = 'button';
+  // Real internal hyperlink: native <a href download> so the whole card is
+  // clickable/keyboard-activatable without relying on a JS click handler.
+  const objectUrl = buildFileArtifactObjectUrl(content, mimeType);
+  const card = document.createElement('a');
+  card.href = objectUrl;
+  card.download = filename;
+  card.rel = 'noopener';
   card.className = 'file-artifact-card';
   card.setAttribute('aria-label', `Download ${filename}`);
   card.title = `Download ${filename}`;
@@ -164,12 +176,11 @@ export const handleCreateFile = function handleCreateFile(this: SidePanelUI & Re
     </span>
   `;
 
+  // Do not preventDefault — browser handles download via href+download.
+  // stopPropagation so chat/message handlers do not swallow the activation.
   card.addEventListener('click', (e: Event) => {
-    e.preventDefault();
     e.stopPropagation();
-    this.downloadFile(content, filename, mimeType);
   });
-  // Native <button> already activates on Enter/Space — do not double-bind keydown.
 
   // Place outside .stream-events so timeline collapse cannot hide the card.
   // Prefer as a sibling after the streaming assistant message, else chat root.

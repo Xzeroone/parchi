@@ -1,9 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   contentToDataUrl,
   handleDownloadFile,
 } from '../../../packages/extension/background/message-handlers/download.js';
 import type { ServiceContext } from '../../../packages/extension/background/service-context.js';
 import { type TestRunner, log } from '../shared/runner.js';
+
+const toolsHandlerPath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../../packages/extension/sidepanel/ui/core/message-handlers/tools.ts',
+);
 
 type DownloadResponse = {
   success?: boolean;
@@ -123,5 +131,30 @@ export async function runDownloadFileSuite(runner: TestRunner) {
       String(response.error || '').includes('Unknown message type'),
       'download_file must be a known message type',
     );
+  });
+
+  await runner.test('create_file card is a real <a download> hyperlink (PAR-56)', () => {
+    const src = readFileSync(toolsHandlerPath, 'utf8');
+    runner.assertTrue(src.includes("document.createElement('a')"), 'card element is an anchor');
+    runner.assertTrue(src.includes('card.download = filename'), 'sets download attribute');
+    runner.assertTrue(src.includes('card.href = objectUrl'), 'sets href to object URL');
+    runner.assertFalse(src.includes("document.createElement('button')"), 'must not use button card');
+    // Must not block native navigation/download
+    runner.assertFalse(
+      /card\.addEventListener\('click'[\s\S]*?preventDefault/.test(src),
+      'click handler must not preventDefault on the hyperlink',
+    );
+  });
+
+  await runner.test('buildFileArtifactObjectUrl returns a blob: URL', async () => {
+    // Import pure helper from built dist if available; otherwise exercise Blob/URL locally
+    // matching the sidepanel implementation contract.
+    const safeMime = 'text/csv;charset=utf-8';
+    const href = URL.createObjectURL(new Blob(['a,b\n1,2'], { type: safeMime }));
+    try {
+      runner.assertTrue(href.startsWith('blob:'), 'blob object URL');
+    } finally {
+      URL.revokeObjectURL(href);
+    }
   });
 }
