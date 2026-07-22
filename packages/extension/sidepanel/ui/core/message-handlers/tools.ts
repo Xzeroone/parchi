@@ -183,13 +183,15 @@ export const handleCreateFile = function handleCreateFile(this: SidePanelUI & Re
   });
 
   // Place outside .stream-events so timeline collapse cannot hide the card.
-  // Prefer as a sibling after the streaming assistant message, else chat root.
+  // Prefer as a sibling after the streaming assistant message (same turn), else chat root.
+  // Always land under a connected chat parent — never drop the card when stream is mid-teardown.
   const streamContainer = this.streamingState?.container as HTMLElement | undefined | null;
-  const parent = streamContainer?.parentElement;
-  if (parent && streamContainer) {
-    parent.insertBefore(card, streamContainer.nextSibling);
-  } else if (this.elements.chatMessages) {
-    this.elements.chatMessages.appendChild(card);
+  const streamParent = streamContainer?.parentElement;
+  const chatRoot = this.elements.chatMessages as HTMLElement | undefined | null;
+  if (streamParent && streamContainer && streamParent.isConnected) {
+    streamParent.insertBefore(card, streamContainer.nextSibling);
+  } else if (chatRoot) {
+    chatRoot.appendChild(card);
   }
   this.scrollToBottom();
 };

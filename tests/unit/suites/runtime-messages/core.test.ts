@@ -150,6 +150,13 @@ export async function runRuntimeMessagesCoreSuite(runner: TestRunner) {
           sessionTotalTokens: 2300,
         },
       },
+      {
+        ...base,
+        type: 'create_file',
+        filename: 'prices.csv',
+        content: 'Product,Price\nWidget,9.99',
+        mimeType: 'text/csv',
+      },
     ];
 
     samples.forEach((sample) => {

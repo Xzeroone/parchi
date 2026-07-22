@@ -143,3 +143,11 @@ export type ReportImagesSelection = RuntimeMessageBase & {
   images: ReportImageSummary[];
   selectedImageIds: string[];
 };
+
+/** Offer a downloadable file artifact in the sidepanel chat (create_file tool). */
+export type CreateFile = RuntimeMessageBase & {
+  type: 'create_file';
+  filename: string;
+  content: string;
+  mimeType?: string;
+};

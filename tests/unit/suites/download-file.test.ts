@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { RUNTIME_MESSAGE_SCHEMA_VERSION, isRuntimeMessage, runtimeMessageTypes } from '@parchi/shared';
 import {
   contentToDataUrl,
   handleDownloadFile,
@@ -144,6 +145,25 @@ export async function runDownloadFileSuite(runner: TestRunner) {
       /card\.addEventListener\('click'[\s\S]*?preventDefault/.test(src),
       'click handler must not preventDefault on the hyperlink',
     );
+  });
+
+  await runner.test('create_file is a valid runtime message (reaches sidepanel)', () => {
+    runner.assertTrue(
+      (runtimeMessageTypes as readonly string[]).includes('create_file'),
+      'create_file must be in runtimeMessageTypes',
+    );
+    const msg = {
+      schemaVersion: RUNTIME_MESSAGE_SCHEMA_VERSION,
+      runId: 'run-1',
+      turnId: 'turn-1',
+      sessionId: 'session-1',
+      timestamp: Date.now(),
+      type: 'create_file',
+      filename: 'prices.csv',
+      content: 'a,b\n1,2',
+      mimeType: 'text/csv',
+    };
+    runner.assertTrue(isRuntimeMessage(msg), 'isRuntimeMessage must accept create_file');
   });
 
   await runner.test('buildFileArtifactObjectUrl returns a blob: URL', async () => {

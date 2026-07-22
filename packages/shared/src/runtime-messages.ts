@@ -35,6 +35,7 @@ export type {
   AssistantFinal,
   CompactionEvent,
   ContextCompacted,
+  CreateFile,
   ReportImageCaptured,
   ReportImageSummary,
   ReportImagesSelection,
@@ -65,6 +66,7 @@ import type {
   AssistantFinal,
   CompactionEvent,
   ContextCompacted,
+  CreateFile,
   ReportImageCaptured,
   ReportImagesSelection,
   RunError,
@@ -76,7 +78,7 @@ import type {
   TokenTraceEvent,
 } from './runtime-messages-extended.js';
 
-/** Union of all runtime message types (22 variants). */
+/** Union of all runtime message types (23 variants). */
 export type RuntimeMessage =
   | UserRunStart
   | AssistantStreamStart
@@ -99,7 +101,8 @@ export type RuntimeMessage =
   | ReportImagesSelection
   | SubagentComplete
   | SubagentTabAssigned
-  | SessionTabsUpdate;
+  | SessionTabsUpdate
+  | CreateFile;
 
 /** All valid runtime message type strings. */
 export const runtimeMessageTypes = [
@@ -125,6 +128,7 @@ export const runtimeMessageTypes = [
   'subagent_complete',
   'subagent_tab_assigned',
   'session_tabs_update',
+  'create_file',
 ] as const;
 
 export type RuntimeMessageType = (typeof runtimeMessageTypes)[number];
