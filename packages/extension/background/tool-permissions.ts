@@ -2,7 +2,7 @@ import type { BrowserToolName } from '../tools/browser-tool-definitions.js';
 import type { BrowserToolArgs } from '../tools/browser-tool-shared.js';
 import type { BrowserTools } from '../tools/browser-tools.js';
 
-type ToolPermissionCategory = 'navigate' | 'interact' | 'read' | 'screenshots' | 'tabs';
+export type ToolPermissionCategory = 'navigate' | 'interact' | 'read' | 'screenshots' | 'tabs' | 'scripting';
 
 type ToolPermissionSettings = {
   toolPermissions?: Partial<Record<ToolPermissionCategory, boolean>>;
@@ -18,7 +18,7 @@ const TOOL_PERMISSION_CATEGORIES: Record<BrowserToolName, ToolPermissionCategory
   pressKey: 'interact',
   scroll: 'interact',
   waitFor: 'read',
-  evaluate: 'interact',
+  evaluate: 'scripting',
   watchNetwork: 'read',
   getNetworkLog: 'read',
   getContent: 'read',
@@ -32,6 +32,18 @@ const TOOL_PERMISSION_CATEGORIES: Record<BrowserToolName, ToolPermissionCategory
   groupTabs: 'tabs',
   describeSessionTabs: 'tabs',
 };
+
+function permissionDenied(category: ToolPermissionCategory) {
+  return {
+    allowed: false as const,
+    reason: `Permission blocked: ${category}`,
+    policy: {
+      type: 'permission' as const,
+      category,
+      reason: `Permission blocked: ${category}`,
+    },
+  };
+}
 
 export function getToolPermissionCategory(toolName: string): ToolPermissionCategory | null {
   if (!Object.hasOwn(TOOL_PERMISSION_CATEGORIES, toolName)) {
@@ -96,15 +108,17 @@ export async function checkToolPermission(
   const permissions = settings.toolPermissions || {};
   const category = getToolPermissionCategory(toolName);
   if (category && permissions[category] === false) {
-    return {
-      allowed: false,
-      reason: `Permission blocked: ${category}`,
-      policy: {
-        type: 'permission',
-        category,
-        reason: `Permission blocked: ${category}`,
-      },
-    };
+    return permissionDenied(category);
+  }
+
+  // waitFor is categorized as read (selector/text), but script mode needs scripting.
+  if (
+    toolName === 'waitFor' &&
+    typeof args.script === 'string' &&
+    args.script.trim().length > 0 &&
+    permissions.scripting === false
+  ) {
+    return permissionDenied('scripting');
   }
 
   if (category === 'tabs') return { allowed: true };

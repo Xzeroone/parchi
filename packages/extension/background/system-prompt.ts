@@ -42,8 +42,9 @@ function detectCspStrictHost(url: string): string {
 
   return `<csp_host_risk>
 ⚠️ This host (${host}) is known to enforce a strict Content Security Policy.
-• AVOID evaluate() and waitFor(script) — they will likely return "csp_blocked".
-• Prefer waitFor(selector) or waitFor(text) for wait conditions.
+• evaluate() and waitFor(script) will try chrome.userScripts (USER_SCRIPT world) first — this bypasses page CSP when "Allow User Scripts" is enabled for Parchi in chrome://extensions.
+• If userScripts is unavailable or disabled, evaluate and waitFor(script) will fall back to chrome.scripting.executeScript and likely return "csp_blocked".
+• Prefer waitFor(selector) or waitFor(text) for wait conditions — these always work regardless of CSP.
 • Prefer getContent / findHtml / screenshot for reading page state.
 • Prefer click(selector) or clickAt(x,y) for interaction — these use non-script paths.
 • If a tool returns "csp_blocked", switch strategy immediately (see <csp_strict_hosts> in the system prompt). Do NOT retry the same script-based approach.

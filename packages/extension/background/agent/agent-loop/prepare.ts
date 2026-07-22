@@ -27,11 +27,12 @@ export async function prepareAgentLoopRun(
   attachments?: Array<{ kind?: string; dataUrl?: string; name?: string }>,
 ): Promise<PreparedAgentLoopRun | PreparedAgentLoopBlocked> {
   const sessionState = ctx.getSessionState(sessionId);
-  const browserTools = ctx.getBrowserTools(sessionId);
+  // Load settings before resolving BrowserTools so maxSessionTabs (and other
+  // live settings) apply on first use for this run — not only on later tool calls.
   const settings = await loadAgentSettings();
-
   ctx.currentSettings = settings;
   ctx.currentSessionId = sessionId;
+  const browserTools = ctx.getBrowserTools(sessionId);
 
   try {
     await browserTools.configureSessionTabs(selectedTabs || [], { title: 'Parchi', color: 'blue' });
@@ -127,7 +128,14 @@ async function loadAgentSettings(): Promise<AgentSettings> {
   settings.enableScreenshots ??= true;
   settings.sendScreenshotsAsImages ??= false;
   settings.visionBridge ??= true;
-  settings.toolPermissions ??= { read: true, interact: true, navigate: true, tabs: true, screenshots: true };
+  settings.toolPermissions ??= {
+    read: true,
+    interact: true,
+    navigate: true,
+    tabs: true,
+    screenshots: true,
+    scripting: true,
+  };
   settings.allowedDomains ??= '';
   if (!Array.isArray(settings.auxAgentProfiles)) settings.auxAgentProfiles = [];
   return settings;

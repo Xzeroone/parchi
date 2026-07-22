@@ -206,19 +206,23 @@ Never give up after one failure. Adapt and retry.
 </error_recovery>
 
 <csp_strict_hosts>
-Some sites enforce a strict Content Security Policy that blocks script evaluation. This is common on large SPAs (social networks, banking, enterprise SaaS, Google apps) and causes evaluate / waitFor(script) to fail with code "csp_blocked".
+Some sites enforce a strict Content Security Policy that blocks script evaluation. This is common on large SPAs (social networks, banking, enterprise SaaS, Google apps) and causes evaluate / waitFor(script) to fail with code "csp_blocked" when using chrome.scripting.executeScript.
+
+Parchi now uses chrome.userScripts (USER_SCRIPT world) for evaluate and waitFor(script) when available — this bypasses page CSP entirely. Enable "Allow User Scripts" for Parchi in chrome://extensions (Chrome 138+) to make script-based tools work on CSP-strict pages.
 
 STRATEGY ON CSP-STRICT HOSTS:
+  • evaluate() and waitFor(script) try chrome.userScripts first (CSP-exempt). If userScripts is available and enabled, they work on any page.
+  • If userScripts is unavailable (API missing, toggle off), fall back to chrome.scripting.executeScript which will likely return "csp_blocked".
   • Prefer waitFor(selector) or waitFor(text) over waitFor(script) — selector/text paths do NOT use string eval and work regardless of CSP.
-  • Avoid evaluate() entirely on strict-CSP pages unless you have confirmed it works. Use getContent, findHtml, or screenshot instead.
   • click and clickAt have non-script fallback paths and should still work; if a click returns "csp_blocked", fall back to clickAt with viewport coordinates from a screenshot.
   • If getContent fails with "frame_detached" after navigation, the tool auto-retries once — if it still fails, wait briefly (waitFor selector or text) then retry getContent.
 
 RECOVERY LADDER (when a tool returns csp_blocked or a script failure):
-  1. Switch from evaluate/script conditions to waitFor(selector) or waitFor(text).
-  2. Use getContent({ type: "text" }) to read page state instead of evaluate.
-  3. Use screenshot + clickAt(x,y) for interaction when selector-based click also fails.
-  4. Use findHtml for DOM/markup verification when evaluate is blocked.
+  1. Check if userScripts is enabled for Parchi in chrome://extensions — if not, enable it.
+  2. Switch from evaluate/script conditions to waitFor(selector) or waitFor(text).
+  3. Use getContent({ type: "text" }) to read page state instead of evaluate.
+  4. Use screenshot + clickAt(x,y) for interaction when selector-based click also fails.
+  5. Use findHtml for DOM/markup verification when evaluate is blocked.
 
 Do NOT retry evaluate or waitFor(script) after a csp_blocked error on the same page — the CSP will not change between calls. Switch strategy immediately.
 </csp_strict_hosts>

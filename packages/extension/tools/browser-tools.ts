@@ -14,11 +14,12 @@ import { type ToolHandlerMap, createToolHandlers, executeTool } from './browser-
 import {
   type ActionOverlayPayload,
   type BrowserToolArgs,
+  DEFAULT_MAX_SESSION_TABS,
   DEFAULT_SESSION_GROUP,
   type GroupOptions,
-  MAX_SESSION_TABS,
   type SessionTabSummary,
 } from './browser-tool-shared.js';
+import { executeUserScript } from './browser-user-scripts.js';
 
 export class BrowserTools {
   tools: Partial<Record<BrowserToolName, true>>;
@@ -27,8 +28,10 @@ export class BrowserTools {
   currentSessionTabId: number | null;
   sessionTabGroupId: number | null;
   supportsTabGroups: boolean;
+  supportsDebugger: boolean;
   screenshotQuality: 'high' | 'medium' | 'low' | undefined;
   debugManager: BrowserDebugManager;
+  maxSessionTabs: number;
 
   constructor() {
     this.sessionTabs = new Map();
@@ -37,13 +40,15 @@ export class BrowserTools {
     this.supportsTabGroups =
       typeof globalThis.chrome?.tabs?.group === 'function' &&
       typeof globalThis.chrome?.tabGroups?.update === 'function';
+    this.supportsDebugger = typeof globalThis.chrome?.debugger !== 'undefined';
     this.debugManager = new BrowserDebugManager();
-    this.tools = getBrowserToolMap(this.supportsTabGroups);
+    this.tools = getBrowserToolMap(this.supportsTabGroups, this.supportsDebugger);
     this.toolHandlers = createToolHandlers(this);
+    this.maxSessionTabs = DEFAULT_MAX_SESSION_TABS;
   }
 
   getToolDefinitions(): ReturnType<typeof getBrowserToolDefinitions> {
-    return getBrowserToolDefinitions(this.supportsTabGroups);
+    return getBrowserToolDefinitions(this.supportsTabGroups, this.supportsDebugger);
   }
 
   getSessionTabSummaries(): SessionTabSummary[] {
@@ -58,7 +63,7 @@ export class BrowserTools {
     return {
       tabs: this.getSessionTabSummaries(),
       activeTabId: this.currentSessionTabId,
-      maxTabs: MAX_SESSION_TABS,
+      maxTabs: this.maxSessionTabs,
       groupTitle: this.getGroupTitle(DEFAULT_SESSION_GROUP),
     };
   }
@@ -83,16 +88,13 @@ export class BrowserTools {
       (tabId) => {
         this.currentSessionTabId = tabId;
       },
-      (groupId) => {
-        this.sessionTabGroupId = groupId;
-      },
       this.supportsTabGroups,
       (groupOptions) => this.ensureSessionTabGroup(groupOptions),
     );
   }
 
   getGroupTitle(options: GroupOptions): string {
-    return getGroupTitle(this.sessionTabs, options);
+    return getGroupTitle(this.sessionTabs, options, this.maxSessionTabs);
   }
 
   async ensureSessionTabGroup(options: GroupOptions = DEFAULT_SESSION_GROUP) {
@@ -104,11 +106,12 @@ export class BrowserTools {
         this.sessionTabGroupId = groupId;
       },
       options,
+      this.maxSessionTabs,
     );
   }
 
   async updateGroupTitle() {
-    await updateGroupTitleState(this.supportsTabGroups, this.sessionTabGroupId, this.sessionTabs);
+    await updateGroupTitleState(this.supportsTabGroups, this.sessionTabGroupId, this.sessionTabs, this.maxSessionTabs);
   }
 
   async executeTool(toolName: string, args: BrowserToolArgs = {}) {
@@ -155,6 +158,10 @@ export class BrowserTools {
     args: TArgs,
   ) {
     return runInAllFrames(tabId, func, args);
+  }
+
+  async runUserScript<T = unknown>(tabId: number, code: string) {
+    return executeUserScript<T>(tabId, code);
   }
 
   async watchNetwork(tabId: number, clearExisting = true) {

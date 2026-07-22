@@ -5,12 +5,16 @@ export const INTERACTION_TOOLS = [
   {
     name: 'click',
     description:
-      'Click an element by selector. Supports CSS, text selectors like `text=Create note`. Uses a non-script injection path that works on CSP-strict pages. If the element is not found, falls back to searching all frames.',
+      '[DEPRECATED — use clickAt instead] Click an element by selector. Supports CSS, text selectors like `text=Create note`. Uses a non-script injection path that works on CSP-strict pages. If the element is not found and searchFrames is true, falls back to searching all frames.',
     input_schema: {
       type: 'object',
       properties: {
         selector: { type: 'string', description: 'CSS selector to click.' },
         timeoutMs: { type: 'number', description: 'Optional wait timeout (ms).' },
+        searchFrames: {
+          type: 'boolean',
+          description: 'If true, search all frames when element not found in top frame. Defaults to false.',
+        },
         tabId: { type: 'number', description: 'Optional tab id.' },
       },
       required: ['selector'],
@@ -42,6 +46,10 @@ export const INTERACTION_TOOLS = [
         selector: { type: 'string', description: 'CSS selector for input.' },
         text: { type: 'string', description: 'Text to enter.' },
         timeoutMs: { type: 'number', description: 'Optional wait timeout (ms).' },
+        searchFrames: {
+          type: 'boolean',
+          description: 'If true, search all frames when element not found in top frame. Defaults to false.',
+        },
         tabId: { type: 'number', description: 'Optional tab id.' },
       },
       required: ['selector', 'text'],

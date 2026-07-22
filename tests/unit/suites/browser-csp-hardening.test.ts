@@ -55,6 +55,11 @@ function makeCtxWithRunInTab(outcomes: Outcome[], overrides: Partial<BrowserTool
     captureActiveTab: async () => 1,
     runInTab: stub,
     runInAllFrames: stub,
+    runUserScript: async () => ({
+      success: false,
+      error: 'userScripts not available in test environment',
+      code: 'userScripts_api_missing',
+    }),
     sendOverlay: async () => {},
     ...overrides,
   } as unknown as BrowserToolsDelegate;

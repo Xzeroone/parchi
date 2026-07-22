@@ -172,13 +172,21 @@ export async function runOauthModelNormalizationSuite(runner: TestRunner) {
     runner.assertTrue(PROVIDER_REGISTRY['claude-oauth'] === undefined, 'claude-oauth should not be registered');
   });
 
-  await runner.test('ollama-cloud is live-first (empty static catalog, api-key)', () => {
+  await runner.test('ollama-cloud is live-first (static catalog for context enrichment, api-key)', () => {
     const def = PROVIDER_REGISTRY['ollama-cloud'];
     runner.assertTrue(def !== undefined && def.type === 'api-key');
     runner.assertEqual(def.sdkType, 'openai-compatible');
     runner.assertEqual(def.defaultBaseUrl, 'https://ollama.com/v1');
     runner.assertTrue(def.supportsModelListing && def.modelsEndpoint === '/models');
-    runner.assertTrue(Array.isArray(def.models) && def.models.length === 0);
+    // Static catalog provides context-window enrichment for live-discovered models.
+    runner.assertTrue(Array.isArray(def.models) && def.models.length > 0);
+    // Verify key models have correct context windows (sourced from Ollama /api/show).
+    const minimaxM3 = def.models?.find((m) => m.id === 'minimax-m3');
+    runner.assertTrue(minimaxM3 !== undefined, 'minimax-m3 should be in static catalog');
+    runner.assertEqual(minimaxM3?.contextWindow, 524288, 'minimax-m3 should have 524288 context window');
+    runner.assertTrue(minimaxM3?.supportsVision === true, 'minimax-m3 should support vision');
+    const deepseekV4Pro = def.models?.find((m) => m.id === 'deepseek-v4-pro');
+    runner.assertEqual(deepseekV4Pro?.contextWindow, 524288, 'deepseek-v4-pro should have 524288 context window');
   });
 
   await runner.test('live-first merge keeps only live + manual (ollama)', () => {

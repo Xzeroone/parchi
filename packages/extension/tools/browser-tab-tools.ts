@@ -3,7 +3,6 @@ import {
   type BrowserToolsDelegate,
   DEFAULT_SESSION_GROUP,
   type GroupOptions,
-  MAX_SESSION_TABS,
   formatToolError,
   missingSessionTabError,
 } from './browser-tool-shared.js';
@@ -20,8 +19,8 @@ export async function describeSessionTabsTool(ctx: BrowserToolsDelegate) {
     tabs: ctx.getSessionTabSummaries(),
     activeTabId: ctx.currentSessionTabId,
     tabCount: ctx.sessionTabs.size,
-    maxTabs: MAX_SESSION_TABS,
-    canOpenMore: ctx.sessionTabs.size < MAX_SESSION_TABS,
+    maxTabs: ctx.maxSessionTabs,
+    canOpenMore: ctx.sessionTabs.size < ctx.maxSessionTabs,
     groupId: ctx.sessionTabGroupId,
     groupTitle: ctx.getGroupTitle(DEFAULT_SESSION_GROUP),
   };
@@ -66,10 +65,10 @@ export async function navigateTool(ctx: BrowserToolsDelegate, args: BrowserToolA
 }
 
 export async function openTabTool(ctx: BrowserToolsDelegate, args: BrowserToolArgs) {
-  if (ctx.sessionTabs.size >= MAX_SESSION_TABS) {
+  if (ctx.sessionTabs.size >= ctx.maxSessionTabs) {
     return {
       success: false,
-      error: `Tab limit reached (max ${MAX_SESSION_TABS} tabs per session). Close existing tabs with closeTab or use navigate on current tab.`,
+      error: `Tab limit reached (max ${ctx.maxSessionTabs} tabs per session). Close existing tabs with closeTab or use navigate on current tab.`,
       hint: 'Use closeTab({ tabId: <id> }) to close a tab, or navigate({ url: "..." }) to reuse current tab.',
     };
   }

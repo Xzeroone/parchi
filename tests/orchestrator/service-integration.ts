@@ -77,12 +77,12 @@ export async function runOrchestratorServiceIntegrationSuite(
     });
   });
 
-  await runner.test('legacy await_agents alias still works and completes the final reconcile wave', async () => {
+  await runner.test('await_subagent completes the final reconcile wave', async () => {
     const dispatch = await callBuiltin(ctx, 'dispatch_orchestrator_tasks', { maxTasks: 2 }, nestedSpawnStub);
     runner.assertEqual(dispatch.dispatched.length, 1, 'only reconcile should remain');
 
-    const awaitAlias = await callBuiltin(ctx, 'await_agents', {});
-    runner.assertTrue(awaitAlias.success === true, 'await_agents alias should succeed');
+    const awaitResult = await callBuiltin(ctx, 'await_subagent', {});
+    runner.assertTrue(awaitResult.success === true, 'await_subagent should succeed');
 
     const planResult = await callBuiltin(ctx, 'get_orchestrator_plan', {});
     runner.assertEqual(planResult.taskCounts.completed, planResult.taskCounts.total, 'all tasks should complete');

@@ -1,0 +1,91 @@
+<!-- ===== PERMISSIONS ===== -->
+<div class="settings-tab-pane" data-pane="permissions">
+    <details class="collapsible" open>
+        <summary>Tool Permissions</summary>
+        <div class="collapsible-body">
+            <div class="permissions-grid">
+                <label class="switch-row" for="permissionRead">
+                    <span class="switch-copy">
+                        <span class="switch-title">Read</span>
+                        <span class="switch-subtitle">Allow extraction and DOM reads.</span>
+                    </span>
+                    <input type="checkbox" id="permissionRead" class="switch-input" />
+                    <span class="switch-track"></span>
+                </label>
+                <label class="switch-row" for="permissionInteract">
+                    <span class="switch-copy">
+                        <span class="switch-title">Interact</span>
+                        <span class="switch-subtitle">Clicks, typing, keypresses, and scrolling on the page.</span>
+                    </span>
+                    <input type="checkbox" id="permissionInteract" class="switch-input" />
+                    <span class="switch-track"></span>
+                </label>
+                <label class="switch-row" for="permissionScripting">
+                    <span class="switch-copy">
+                        <span class="switch-title">Scripting</span>
+                        <span class="switch-subtitle">Arbitrary page JavaScript (evaluate, waitFor with script).</span>
+                    </span>
+                    <input type="checkbox" id="permissionScripting" class="switch-input" />
+                    <span class="switch-track"></span>
+                </label>
+                <label class="switch-row" for="permissionNavigate">
+                    <span class="switch-copy">
+                        <span class="switch-title">Navigate</span>
+                        <span class="switch-subtitle">URL changes and page loads.</span>
+                    </span>
+                    <input type="checkbox" id="permissionNavigate" class="switch-input" />
+                    <span class="switch-track"></span>
+                </label>
+                <label class="switch-row" for="permissionTabs">
+                    <span class="switch-copy">
+                        <span class="switch-title">Tabs</span>
+                        <span class="switch-subtitle">Selecting or opening browser tabs.</span>
+                    </span>
+                    <input type="checkbox" id="permissionTabs" class="switch-input" />
+                    <span class="switch-track"></span>
+                </label>
+                <label class="switch-row" for="permissionScreenshots">
+                    <span class="switch-copy">
+                        <span class="switch-title">Screenshots</span>
+                        <span class="switch-subtitle">Allow captured page images.</span>
+                    </span>
+                    <input type="checkbox" id="permissionScreenshots" class="switch-input" />
+                    <span class="switch-track"></span>
+                </label>
+            </div>
+        </div>
+    </details>
+
+    <details class="collapsible" open>
+        <summary>Session Tabs</summary>
+        <div class="collapsible-body">
+            <div class="form-group">
+                <label for="maxSessionTabs">Max Session Tabs</label>
+                <input type="number" id="maxSessionTabs" min="1" max="50" value="5" />
+                <small>Maximum number of browser tabs the agent can open per session (1–50).</small>
+            </div>
+        </div>
+    </details>
+
+    <details class="collapsible">
+        <summary>Browser Access</summary>
+        <div class="collapsible-body">
+            <div class="form-group">
+                <label for="allowedDomains">Allowed Domains</label>
+                <input type="text" id="allowedDomains" placeholder="Leave empty for all domains" />
+                <small>Comma-separated, e.g. google.com, github.com</small>
+            </div>
+        </div>
+    </details>
+
+    <details class="collapsible" open>
+        <summary>Danger Zone</summary>
+        <div class="collapsible-body">
+            <div class="form-group">
+                <label>Profiles</label>
+                <small>Clear all saved profiles and restore the default configuration.</small>
+            </div>
+            <button id="settingsResetProfilesBtn" class="btn btn-secondary" type="button" style="width:100%;border-color:rgb(var(--error-rgb) / 0.32);color:var(--error);">Reset all profiles</button>
+        </div>
+    </details>
+</div>

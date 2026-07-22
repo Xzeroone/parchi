@@ -66,6 +66,7 @@ export interface BrowserToolsDelegate {
   sessionTabGroupId: number | null;
   supportsTabGroups: boolean;
   screenshotQuality: 'high' | 'medium' | 'low' | undefined;
+  maxSessionTabs: number;
   getSessionTabSummaries(): SessionTabSummary[];
   getGroupTitle(options: GroupOptions): string;
   updateGroupTitle(): Promise<void>;
@@ -83,6 +84,10 @@ export interface BrowserToolsDelegate {
     func: (...args: TArgs) => TResult | Promise<TResult>,
     args: TArgs,
   ): Promise<BrowserToolResult<TResult>>;
+  runUserScript<T = unknown>(
+    tabId: number,
+    code: string,
+  ): Promise<{ success: true; result: T } | { success: false; error: string; code: string; hint?: string }>;
   watchNetwork(tabId: number, clearExisting?: boolean): Promise<BrowserToolResult>;
   readNetworkLog(
     tabId: number,
@@ -98,7 +103,21 @@ export interface BrowserToolsDelegate {
   sendOverlay(tabId: number, payload: ActionOverlayPayload, retries?: number): Promise<void>;
 }
 
-export const MAX_SESSION_TABS = 5;
+export const DEFAULT_MAX_SESSION_TABS = 5;
+/** Absolute ceiling for Max Session Tabs (UI, storage, runtime). */
+export const MAX_SESSION_TABS_LIMIT = 50;
+
+/**
+ * Normalize a user/settings value into a valid per-session tab cap.
+ * Accepts number or numeric string; clamps to [1, MAX_SESSION_TABS_LIMIT].
+ */
+export function normalizeMaxSessionTabs(value: unknown, fallback: number = DEFAULT_MAX_SESSION_TABS): number {
+  const n = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : Number.NaN;
+  if (!Number.isFinite(n)) {
+    return Math.min(MAX_SESSION_TABS_LIMIT, Math.max(1, Math.round(fallback)));
+  }
+  return Math.min(MAX_SESSION_TABS_LIMIT, Math.max(1, Math.round(n)));
+}
 
 export const DEFAULT_SESSION_GROUP: Required<GroupOptions> = {
   title: 'Parchi',

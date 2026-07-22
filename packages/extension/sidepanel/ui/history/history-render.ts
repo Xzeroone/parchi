@@ -29,7 +29,8 @@ sidePanelProto.renderConversationHistory = function renderConversationHistory() 
       const messageDiv = document.createElement('div');
       messageDiv.className = 'message assistant';
       let html = `<div class="message-header">Assistant</div>`;
-      const showThinking = this.elements.showThinking.value === 'true';
+      const config = this.configs?.[this.currentConfig] || {};
+      const showThinking = config.showThinking !== false;
       if (parsed.thinking && showThinking) {
         const cleanedThinking = dedupeThinking(parsed.thinking);
         html += `

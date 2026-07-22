@@ -88,6 +88,7 @@ async function setupTestSettings(worker: import('playwright').Worker, endpoint: 
           navigate: true,
           tabs: true,
           screenshots: false,
+          scripting: true,
         },
         allowedDomains: '',
         configs: {},

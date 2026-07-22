@@ -78,10 +78,11 @@ export class SidePanelUI {
     navigate: boolean;
     tabs: boolean;
     screenshots: boolean;
+    scripting: boolean;
   };
   auxAgentProfiles: string[];
   currentView: 'chat' | 'history';
-  currentSettingsTab: 'providers' | 'model' | 'generation' | 'display' | 'advanced';
+  currentSettingsTab: 'providers' | 'model' | 'screenshots' | 'display' | 'permissions';
   profileEditorTarget: string;
   subagents: Map<string, SubagentEntry>;
   activeAgent: string;
@@ -223,6 +224,7 @@ export class SidePanelUI {
       navigate: true,
       tabs: true,
       screenshots: true,
+      scripting: true,
     };
     this.auxAgentProfiles = [];
     this.currentView = 'chat';

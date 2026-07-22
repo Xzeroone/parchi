@@ -19,14 +19,24 @@ export const BASE_BROWSER_TOOL_DEFINITIONS = [
 /** Union type of all browser tool names */
 export type BrowserToolName = (typeof BASE_BROWSER_TOOL_DEFINITIONS)[number]['name'];
 
-/** Get tool definitions, optionally filtering tab groups if not supported */
-export function getBrowserToolDefinitions(supportsTabGroups: boolean): ToolDefinition[] {
-  return supportsTabGroups
-    ? [...BASE_BROWSER_TOOL_DEFINITIONS]
-    : BASE_BROWSER_TOOL_DEFINITIONS.filter((t) => t.name !== 'groupTabs');
+/** Get tool definitions, optionally filtering by platform support */
+export function getBrowserToolDefinitions(supportsTabGroups: boolean, supportsDebugger = true): ToolDefinition[] {
+  let tools: ToolDefinition[] = [...BASE_BROWSER_TOOL_DEFINITIONS];
+  if (!supportsTabGroups) {
+    tools = tools.filter((t) => t.name !== 'groupTabs');
+  }
+  if (!supportsDebugger) {
+    tools = tools.filter((t) => t.name !== 'watchNetwork' && t.name !== 'getNetworkLog');
+  }
+  return tools;
 }
 
 /** Get a map of available tool names for quick lookup */
-export function getBrowserToolMap(supportsTabGroups: boolean): Partial<Record<BrowserToolName, true>> {
-  return Object.fromEntries(getBrowserToolDefinitions(supportsTabGroups).map((t) => [t.name, true] as const));
+export function getBrowserToolMap(
+  supportsTabGroups: boolean,
+  supportsDebugger = true,
+): Partial<Record<BrowserToolName, true>> {
+  return Object.fromEntries(
+    getBrowserToolDefinitions(supportsTabGroups, supportsDebugger).map((t) => [t.name, true] as const),
+  );
 }

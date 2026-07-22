@@ -25,7 +25,7 @@ export async function runBrowserCspClickFallbackSuite(runner: TestRunner) {
   log('\n=== Testing CSP-safe click fallback (PAR-18 S4) ===', 'info');
 
   await runner.test(
-    'clickTool dispatches without reconstructing helpers via new Function (CSP-safe path)',
+    'clickTool passes helper source strings (not function refs) for structured-clone-safe serialization',
     async () => {
       const calls: Array<{ src: string; args: unknown[] }> = [];
       const stub = async (_tabId: number, func: (...a: unknown[]) => unknown, args: unknown[]) => {
@@ -47,28 +47,25 @@ export async function runBrowserCspClickFallbackSuite(runner: TestRunner) {
         captureActiveTab: async () => 1,
         runInTab: stub,
         runInAllFrames: stub,
+        runUserScript: async () => ({
+          success: false,
+          error: 'userScripts not available in test environment',
+          code: 'userScripts_api_missing',
+        }),
         sendOverlay: async () => {},
       } as unknown as BrowserToolsDelegate;
-      const result = (await clickTool(ctx, { selector: '#submit' })) as {
+      const result = (await clickTool(ctx, { selector: '#submit', searchFrames: true })) as {
         success: boolean;
         strategy?: string;
       };
       runner.assertTrue(result.success, `expected click success, got: ${JSON.stringify(result)}`);
       runner.assertEqual(calls.length, 1, 'click should not double-fire when first runInTab succeeds');
-      // The four args are: spec, timeoutMs, dispatchSyntheticClick, resolveSelectorSpecElement
-      runner.assertEqual(calls[0].args.length, 4);
-      runner.assertEqual(
-        typeof calls[0].args[2],
-        'function',
-        'dispatchSyntheticClick must be passed as a function ref',
-      );
-      runner.assertEqual(
-        typeof calls[0].args[3],
-        'function',
-        'resolveSelectorSpecElement must be passed as a function ref',
-      );
-      // The injected closure must NOT contain a literal `new Function(` call
-      // for the helpers — that would re-introduce the CSP eval trigger.
+      // The two args are: spec, timeoutMs — no more string-source helpers (inlined for CSP safety)
+      runner.assertEqual(calls[0].args.length, 2);
+      runner.assertEqual(typeof calls[0].args[0], 'object', 'first arg must be the parsed selector spec');
+      runner.assertEqual(typeof calls[0].args[1], 'number', 'second arg must be the timeout in ms');
+      // The injected closure no longer reconstructs helpers via new Function —
+      // they are inlined directly to be CSP-safe.
       runner.assertFalse(
         /new\s+Function\s*\(/.test(calls[0].src),
         'click closure must not reconstruct helpers via new Function (CSP regression)',
@@ -99,6 +96,11 @@ export async function runBrowserCspClickFallbackSuite(runner: TestRunner) {
         captureActiveTab: async () => 1,
         runInTab: stub,
         runInAllFrames: stub,
+        runUserScript: async () => ({
+          success: false,
+          error: 'userScripts not available in test environment',
+          code: 'userScripts_api_missing',
+        }),
         sendOverlay: async () => {},
       } as unknown as BrowserToolsDelegate;
       const result = (await clickAtTool(ctx, { x: 100, y: 200 })) as { success: boolean; x: number; y: number };

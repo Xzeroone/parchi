@@ -1,5 +1,6 @@
 import { EVALUATE_TOOL_MAX_SCRIPT_LENGTH, runPageScript, toJsonSafe } from './browser-eval-shared.js';
 import { type BrowserToolArgs, type BrowserToolsDelegate, missingSessionTabError } from './browser-tool-shared.js';
+import { buildEvaluateUserScript } from './browser-user-scripts.js';
 
 export async function evaluateTool(ctx: BrowserToolsDelegate, args: BrowserToolArgs) {
   const tabId = await ctx.resolveTabId(args);
@@ -23,6 +24,22 @@ export async function evaluateTool(ctx: BrowserToolsDelegate, args: BrowserToolA
     durationMs: 800,
   });
 
+  // Try userScripts path first (CSP-exempt, USER_SCRIPT world)
+  const code = buildEvaluateUserScript(script, scriptArgs);
+  const usResult = await ctx.runUserScript<{ success: boolean; result?: unknown; error?: string; code?: string }>(
+    tabId,
+    code,
+  );
+  if (usResult.success && usResult.result) {
+    return usResult.result;
+  }
+  // Script-level error (not API failure) — return it directly
+  if (!usResult.success && usResult.code === 'script_error') {
+    return usResult;
+  }
+  // API-level failure (not enabled, etc.) — fall through to executeScript
+
+  // Fallback: chrome.scripting.executeScript (works on non-CSP pages)
   const result = await ctx.runInTab(
     tabId,
     async (source: string, runtimeArgs: unknown[], runPageScriptSrc: string, toJsonSafeSrc: string) => {
@@ -45,7 +62,7 @@ export async function evaluateTool(ctx: BrowserToolsDelegate, args: BrowserToolA
           error: msg,
           code: isCsp ? 'csp_blocked' : 'executeScript_failed',
           hint: isCsp
-            ? 'Script evaluation blocked by page CSP. Use getContent, waitFor(selector|text), or screenshot instead.'
+            ? 'Script evaluation blocked by page CSP. Enable "Allow User Scripts" in chrome://extensions for Parchi to bypass CSP, or use getContent, waitFor(selector|text), or screenshot instead.'
             : undefined,
         };
       }

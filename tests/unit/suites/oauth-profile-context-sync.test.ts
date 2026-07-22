@@ -68,9 +68,9 @@ export async function runOauthProfileContextSyncSuite(runner: TestRunner) {
     },
   );
 
-  await runner.test('syncOAuthProfiles preserves a user-customized contextLimit on re-sync (same model)', async () => {
-    // Regression guard: OAuth sync must never silently overwrite a contextLimit the
-    // user already set, even when live API data for the same model disagrees.
+  await runner.test('syncOAuthProfiles refreshes contextLimit from live data on re-sync (same model)', async () => {
+    // Per PAR-38: contextLimit should always track the selected model's discovered
+    // metadata. On re-sync, live API data wins over a previously-stored value.
     const origFetch = (globalThis as any).fetch;
     const origChrome = (globalThis as any).chrome;
 
@@ -108,7 +108,7 @@ export async function runOauthProfileContextSyncSuite(runner: TestRunner) {
           providerId,
           model: 'grok-4',
           modelId: 'grok-4',
-          contextLimit: 40000, // deliberate user customization, smaller than any known/live value
+          contextLimit: 40000, // stale value, should be refreshed from live data
           provider: 'xai-oauth',
         },
       },
@@ -133,16 +133,16 @@ export async function runOauthProfileContextSyncSuite(runner: TestRunner) {
     await syncOAuthProfiles(ui);
 
     const prof = ui.configs['oauth:xai'] || {};
-    runner.assertEqual(prof.contextLimit, 40000);
+    // Live API data (128000) wins over the stale stored value (40000)
+    runner.assertEqual(prof.contextLimit, 128000);
 
-    // the provider's model catalog is still refreshed from live data...
+    // the provider's model catalog is refreshed from live data
     const prov = (Object.values(ui.providers || {}).find((p: any) => p && p.oauthProviderKey === 'xai') as any) || {};
     const modelInProv = (prov.models || []).find((m: any) => m.id === 'grok-4');
     runner.assertEqual(modelInProv?.contextWindow, 128000);
 
-    // ...but the user's profile-level override is left untouched.
     const comp = computeConfiguredContextLimit(prof);
-    runner.assertEqual(comp, 40000);
+    runner.assertEqual(comp, 128000);
 
     (globalThis as any).fetch = origFetch;
     (globalThis as any).chrome = origChrome;

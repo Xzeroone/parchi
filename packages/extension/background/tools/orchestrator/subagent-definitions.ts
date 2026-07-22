@@ -66,23 +66,5 @@ export function getSubagentToolDefinitions(profileSchema: ProfileSchema): ToolDe
         },
       },
     },
-    {
-      name: 'await_agents',
-      description: 'Legacy alias for await_subagent. Wait for one or more running sub-agents to complete.',
-      input_schema: {
-        type: 'object',
-        properties: {
-          agentIds: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'IDs of agents to wait for. Omit to wait for all running agents.',
-          },
-          timeout: {
-            type: 'number',
-            description: 'Max seconds to wait (default 300).',
-          },
-        },
-      },
-    },
   ];
 }

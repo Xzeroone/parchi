@@ -8,7 +8,8 @@ const sidePanelProto = SidePanelUI.prototype as SidePanelUI & Record<string, unk
 
 sidePanelProto.persistHistory = async function persistHistory() {
   // Default to saving history unless explicitly disabled
-  const saveEnabled = this.elements.saveHistory?.value !== 'false';
+  const config = this.configs?.[this.currentConfig] || {};
+  const saveEnabled = config.saveHistory !== false;
   if (!saveEnabled) return;
 
   // Only persist if there's actual content

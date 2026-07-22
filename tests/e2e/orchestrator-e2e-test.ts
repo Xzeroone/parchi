@@ -69,6 +69,7 @@ export function registerOrchestratorE2ETests({ test, assert, repoRoot, sendRunti
             navigate: true,
             tabs: true,
             screenshots: false,
+            scripting: true,
           },
           allowedDomains: '',
         });
@@ -203,10 +204,10 @@ export function registerOrchestratorE2ETests({ test, assert, repoRoot, sendRunti
         sendRuntimeMessageWithResponse,
         panel,
         sessionId,
-        'await_agents',
+        'await_subagent',
         {},
       );
-      assert(awaitWaveTwo?.success === true, 'await_agents alias should complete the final branch');
+      assert(awaitWaveTwo?.success === true, 'await_subagent should complete the final branch');
 
       const finalPlan = await executeRuntimeTool(
         sendRuntimeMessageWithResponse,

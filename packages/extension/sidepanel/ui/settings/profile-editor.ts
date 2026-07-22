@@ -153,10 +153,10 @@ sidePanelProto.saveProfileEdits = async function saveProfileEdits() {
   if (providerInstance && updated.modelId) {
     const nextProvider = ensureProviderModel(providerInstance, updated.modelId);
     this.providers = { ...(this.providers || {}), [nextProvider.id]: nextProvider };
-    if (!updated.contextLimit) {
-      const matchedModel = nextProvider.models.find((model) => model.id === updated.modelId);
-      if (matchedModel?.contextWindow) updated.contextLimit = matchedModel.contextWindow;
-    }
+    // Always refresh contextLimit from live model metadata so the effective
+    // context tracks the selected model's discovered context window.
+    const matchedModel = nextProvider.models.find((model) => model.id === updated.modelId);
+    if (matchedModel?.contextWindow) updated.contextLimit = matchedModel.contextWindow;
   }
 
   if (isRename) {

@@ -13,7 +13,8 @@ sidePanelProto.scrollToBottom = function scrollToBottom({ force = false } = {}) 
 };
 
 sidePanelProto.shouldAutoScroll = function shouldAutoScroll() {
-  const autoScrollEnabled = this.elements.autoScroll?.value !== 'false';
+  const config = this.configs?.[this.currentConfig] || {};
+  const autoScrollEnabled = config.autoScroll !== false;
   return autoScrollEnabled && !this.userScrolledUp;
 };
 

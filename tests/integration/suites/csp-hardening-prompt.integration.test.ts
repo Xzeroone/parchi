@@ -69,7 +69,12 @@ export async function runCspHardeningPromptSuite(runner: AsyncTestRunner) {
     );
     runner.assertIncludes(prompt, '<csp_host_risk>');
     runner.assertIncludes(prompt, 'facebook.com');
-    runner.assertIncludes(prompt, 'AVOID evaluate() and waitFor(script)');
+    // System prompt now describes the chrome.userScripts primary path with a
+    // chrome.scripting.executeScript fallback; assert the new wording so the
+    // contract is anchored against the live behavior, not the old "AVOID" line.
+    runner.assertIncludes(prompt, 'chrome.userScripts');
+    runner.assertIncludes(prompt, 'chrome.scripting.executeScript');
+    runner.assertIncludes(prompt, '"csp_blocked"');
   });
 
   await runner.test(

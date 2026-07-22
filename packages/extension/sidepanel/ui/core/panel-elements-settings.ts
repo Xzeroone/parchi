@@ -33,7 +33,6 @@ export const getSettingsFormElements = () => ({
   showThinking: byId<HTMLInputElement>('showThinking'),
   streamResponses: byId<HTMLInputElement>('streamResponses'),
   autoScroll: byId<HTMLInputElement>('autoScroll'),
-  confirmActions: byId<HTMLInputElement>('confirmActions'),
   saveHistory: byId<HTMLInputElement>('saveHistory'),
   autoSaveSession: byId<HTMLSelectElement>('autoSaveSession'),
   autoSaveFolderBtn: byId<HTMLButtonElement>('autoSaveFolderBtn'),

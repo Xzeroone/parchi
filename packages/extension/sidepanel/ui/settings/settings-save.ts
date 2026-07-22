@@ -1,6 +1,7 @@
 import { DEFAULT_AGENT_SYSTEM_PROMPT } from '@parchi/shared';
 import { materializeProfileWithProvider } from '../../../state/provider-registry.js';
 import { patchSettingsStoreSnapshot, replaceSettingsStoreSnapshot } from '../../../state/stores/settings-store.js';
+import { DEFAULT_MAX_SESSION_TABS, normalizeMaxSessionTabs } from '../../../tools/browser-tool-shared.js';
 import { SidePanelUI } from '../core/panel-ui.js';
 import { DEFAULT_THEME_ID } from './themes.js';
 
@@ -50,7 +51,6 @@ sidePanelProto.persistAllSettings = async function persistAllSettings({ silent =
       showThinking: activeProfile.showThinking !== false,
       streamResponses: activeProfile.streamResponses !== false,
       autoScroll: activeProfile.autoScroll !== false,
-      confirmActions: activeProfile.confirmActions !== false,
       saveHistory: activeProfile.saveHistory !== false,
       autoSaveSession: this.elements.autoSaveSession?.value === 'true',
       visionBridge: this.elements.visionBridge?.checked !== false,
@@ -59,6 +59,9 @@ sidePanelProto.persistAllSettings = async function persistAllSettings({ silent =
       orchestratorProfile: this.elements.orchestratorProfile?.value || '',
       toolPermissions: this.collectToolPermissions(),
       allowedDomains: this.elements.allowedDomains?.value || '',
+      maxSessionTabs: this.elements.maxSessionTabs
+        ? normalizeMaxSessionTabs(this.elements.maxSessionTabs.value, DEFAULT_MAX_SESSION_TABS)
+        : DEFAULT_MAX_SESSION_TABS,
       auxAgentProfiles: this.auxAgentProfiles,
       uiZoom: this.uiZoom ?? 1,
       fontPreset: this.fontPreset || 'default',

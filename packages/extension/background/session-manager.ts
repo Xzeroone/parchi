@@ -1,3 +1,4 @@
+import { normalizeMaxSessionTabs } from '../tools/browser-tool-shared.js';
 import { BrowserTools } from '../tools/browser-tools.js';
 import { estimateDataUrlBytes, trimReportImages } from './report-images.js';
 import type { SessionState } from './service-types.js';
@@ -93,19 +94,33 @@ export function getBrowserTools(
 ): BrowserTools {
   const id = typeof sessionId === 'string' && sessionId.trim() ? sessionId : 'default';
   const existing = browserToolsBySessionId.get(id);
-  if (existing) return existing;
+  if (existing) {
+    // Apply live settings to existing instances so changes (e.g. maxSessionTabs)
+    // take effect without requiring a new session or extension reload.
+    applySettingsToBrowserTools(existing, currentSettings);
+    return existing;
+  }
   // Evict oldest entries when at capacity
   if (browserToolsBySessionId.size >= MAX_SESSIONS) {
     const oldestKey = browserToolsBySessionId.keys().next().value;
     if (oldestKey !== undefined) browserToolsBySessionId.delete(oldestKey);
   }
   const created = new BrowserTools();
-  const quality = currentSettings?.screenshotQuality;
-  if (quality === 'high' || quality === 'medium' || quality === 'low') {
-    created.screenshotQuality = quality;
-  }
+  applySettingsToBrowserTools(created, currentSettings);
   browserToolsBySessionId.set(id, created);
   return created;
+}
+
+function applySettingsToBrowserTools(tools: BrowserTools, settings: Record<string, any> | null): void {
+  if (!settings) return;
+  const quality = settings.screenshotQuality;
+  if (quality === 'high' || quality === 'medium' || quality === 'low') {
+    tools.screenshotQuality = quality;
+  }
+  // Always honor the user setting (including values above the old hard-coded cap).
+  if (settings.maxSessionTabs !== undefined && settings.maxSessionTabs !== null) {
+    tools.maxSessionTabs = normalizeMaxSessionTabs(settings.maxSessionTabs, tools.maxSessionTabs);
+  }
 }
 
 export function hasBrowserTools(browserToolsBySessionId: Map<string, BrowserTools>, sessionId: string): boolean {

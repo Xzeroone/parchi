@@ -16,7 +16,7 @@ function fakeRunInTab<TArgs extends unknown[], TResult>(
   return Promise.resolve(rebuilt(...args));
 }
 
-function makeCtx(): BrowserToolsDelegate {
+function makeCtx(overrides: Partial<BrowserToolsDelegate> = {}): BrowserToolsDelegate {
   return {
     sessionTabs: new Map(),
     currentSessionTabId: 1,
@@ -33,6 +33,12 @@ function makeCtx(): BrowserToolsDelegate {
     runInTab: fakeRunInTab,
     runInAllFrames: fakeRunInTab,
     sendOverlay: async () => {},
+    runUserScript: async () => ({
+      success: false,
+      error: 'userScripts not available in test environment',
+      code: 'userScripts_api_missing',
+    }),
+    ...overrides,
   } as unknown as BrowserToolsDelegate;
 }
 
@@ -57,5 +63,84 @@ export async function runBrowserEvalSerializationSuite(runner: TestRunner) {
       timeoutMs: 500,
     })) as { success: boolean };
     runner.assertTrue(result.success, `expected success, got: ${JSON.stringify(result)}`);
+  });
+
+  await runner.test('evaluateTool falls back to executeScript when userScripts is unavailable', async () => {
+    const result = (await evaluateTool(makeCtx(), { script: 'return args[0] + args[1]', args: [2, 3] })) as {
+      success: boolean;
+      result?: unknown;
+    };
+    runner.assertTrue(result.success, `expected success, got: ${JSON.stringify(result)}`);
+    runner.assertEqual(result.result, 5);
+  });
+
+  await runner.test('evaluateTool returns userScripts result when userScripts succeeds', async () => {
+    const ctx = makeCtx({
+      runUserScript: (async () => ({
+        success: true,
+        result: { success: true, result: 42 },
+      })) as BrowserToolsDelegate['runUserScript'],
+    });
+    const result = (await evaluateTool(ctx, { script: 'return 42' })) as {
+      success: boolean;
+      result?: unknown;
+    };
+    runner.assertTrue(result.success, `expected success, got: ${JSON.stringify(result)}`);
+    runner.assertEqual(result.result, 42);
+  });
+
+  await runner.test('evaluateTool returns script error from userScripts path directly', async () => {
+    const ctx = makeCtx({
+      runUserScript: (async () => ({
+        success: true,
+        result: { success: false, error: 'ReferenceError: x is not defined', code: 'script_error' },
+      })) as BrowserToolsDelegate['runUserScript'],
+    });
+    const result = (await evaluateTool(ctx, { script: 'return x' })) as {
+      success: boolean;
+      error?: string;
+      code?: string;
+    };
+    runner.assertFalse(result.success, `expected failure, got: ${JSON.stringify(result)}`);
+    runner.assertEqual(result.code, 'script_error');
+  });
+
+  await runner.test('waitForTool pure-script falls back to executeScript when userScripts is unavailable', async () => {
+    const result = (await waitForTool(makeCtx(), {
+      script: 'return true',
+      timeoutMs: 500,
+    })) as { success: boolean };
+    runner.assertTrue(result.success, `expected success, got: ${JSON.stringify(result)}`);
+  });
+
+  await runner.test('waitForTool pure-script uses userScripts when available', async () => {
+    const ctx = makeCtx({
+      runUserScript: (async () => ({
+        success: true,
+        result: { success: true, matchedScript: true, elapsedMs: 10, attempts: 1 },
+      })) as BrowserToolsDelegate['runUserScript'],
+    });
+    const result = (await waitForTool(ctx, {
+      script: 'return document.title',
+      timeoutMs: 500,
+    })) as { success: boolean; matchedScript?: boolean };
+    runner.assertTrue(result.success, `expected success, got: ${JSON.stringify(result)}`);
+    runner.assertTrue(result.matchedScript === true, 'expected matchedScript from userScripts path');
+  });
+
+  await runner.test('waitForTool with selector+text still uses executeScript (not userScripts)', async () => {
+    // When selector or text is present, userScripts path is not attempted
+    const ctx = makeCtx({
+      runUserScript: async () => {
+        throw new Error('userScripts should not be called when selector/text is present');
+      },
+    });
+    const result = (await waitForTool(ctx, {
+      selector: 'body',
+      text: 'test',
+      timeoutMs: 500,
+    })) as { success: boolean };
+    // body exists, but text 'test' won't match — should time out
+    runner.assertFalse(result.success, 'expected timeout since text does not match');
   });
 }

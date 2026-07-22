@@ -154,7 +154,7 @@ export async function handleSpawnSubagent(
     name: subagentName,
     tabId: subTab.tabId,
     status: 'started',
-    note: `${subagentName} is now running in tab ${subTab.tabId}. Use await_agents to wait for results.`,
+    note: `${subagentName} is now running in tab ${subTab.tabId}. Use await_subagent to wait for results.`,
   };
 }
 

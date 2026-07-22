@@ -276,9 +276,12 @@ sidePanelProto.getConfiguredContextLimit = function getConfiguredContextLimit() 
   return computeConfiguredContextLimit(active, this.elements.contextLimit?.value);
 };
 
-export function computeConfiguredContextLimit(active: any, elementsContextValue?: string | number): number {
-  const configured = Number(active?.contextLimit) || Number.parseInt(String(elementsContextValue || '')) || 200000;
-  return configured;
+export function computeConfiguredContextLimit(active: any, _elementsContextValue?: string | number): number {
+  const configured = Number(active?.contextLimit);
+  if (Number.isFinite(configured) && configured > 0) return configured;
+  // Last-resort default — model metadata should have been resolved by now
+  // via selectModelFromGrid / syncOAuthProfiles / profile-editor.
+  return 200000;
 }
 
 sidePanelProto.estimateBaseContextTokens = function estimateBaseContextTokens() {

@@ -32,4 +32,22 @@ export async function runOauthCandidatesSuite(runner: TestRunner) {
 
     runner.assertEqual(prioritizeOAuthModelCandidates('xai', [], ['grok-4', 'grok-4']), ['grok-4']);
   });
+
+  await runner.test('Claude model IDs are recognized as text generation', () => {
+    runner.assertTrue(isLikelyTextGenerationModelId('claude', 'claude-sonnet-4-6-20260601'));
+    runner.assertTrue(isLikelyTextGenerationModelId('claude-oauth', 'claude-opus-4-6-20260204'));
+    runner.assertTrue(isLikelyTextGenerationModelId('claude', 'claude-haiku-4-6-20260601'));
+    runner.assertFalse(isLikelyTextGenerationModelId('claude', 'claude-embedding'));
+  });
+
+  await runner.test('Claude model candidates are prioritized correctly', () => {
+    const prioritized = prioritizeOAuthModelCandidates(
+      'claude',
+      ['claude-embedding', 'claude-sonnet-4-6-20260601', 'claude-opus-4-6-20260204'],
+      ['claude-sonnet-4-6-20260601', 'claude-opus-4-6-20260204', 'claude-haiku-4-6-20260601'],
+    );
+    runner.assertTrue(prioritized.includes('claude-sonnet-4-6-20260601'));
+    runner.assertTrue(prioritized.includes('claude-opus-4-6-20260204'));
+    runner.assertFalse(prioritized.includes('claude-embedding'));
+  });
 }

@@ -37,7 +37,6 @@ sidePanelProto.createNewConfig = async function createNewConfig(name?: string) {
     saveHistory: current.saveHistory !== false,
     showThinking: current.showThinking !== false,
     autoScroll: current.autoScroll !== false,
-    confirmActions: current.confirmActions !== false,
   };
 
   this.refreshConfigDropdown();

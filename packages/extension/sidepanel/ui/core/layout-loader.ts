@@ -17,7 +17,7 @@ export const loadPanelLayout = async () => {
     settingsPanel,
     accountPanel,
     settingsGeneral,
-    settingsAdvanced,
+    settingsPermissions,
     _settingsProfiles,
     settingsUsage,
     tabSelector,
@@ -27,7 +27,7 @@ export const loadPanelLayout = async () => {
     loadTemplate('panels/settings.html'),
     loadTemplate('panels/account.html'),
     loadTemplate('panels/settings-general.html'),
-    loadTemplate('panels/settings-advanced.html'),
+    loadTemplate('panels/settings-permissions.html'),
     loadTemplate('panels/settings-profiles.html'),
     loadTemplate('panels/settings-usage.html'),
     loadTemplate('tab-selector.html'),
@@ -60,7 +60,7 @@ export const loadPanelLayout = async () => {
     }
   };
   distributePanes(settingsGeneral);
-  distributePanes(settingsAdvanced);
+  distributePanes(settingsPermissions);
 
   // v4 redesign: profile editor removed; settings-profiles.html is no longer injected.
   // The hidden activeConfig select is now in the providers pane of settings-general.html.

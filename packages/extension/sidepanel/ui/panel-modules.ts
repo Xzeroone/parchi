@@ -12,7 +12,6 @@ import './chat/panel-markdown.js';
 import './chat/panel-plan.js';
 import './chat/panel-action-timeline.js';
 import './chat/panel-recorder.js';
-import './settings/panel-generation.js';
 import './settings/panel-model-selector.js';
 import './settings/panel-profiles.js';
 import './settings/panel-provider-cards.js';

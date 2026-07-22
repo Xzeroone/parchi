@@ -57,9 +57,9 @@ export const setupSettingsListeners = function setupSettingsListeners(this: Side
   // Settings tabs
   this.elements.settingsTabProvidersBtn?.addEventListener('click', () => this.switchSettingsTab('providers'));
   this.elements.settingsTabModelBtn?.addEventListener('click', () => this.switchSettingsTab('model'));
-  this.elements.settingsTabGenerationBtn?.addEventListener('click', () => this.switchSettingsTab('generation'));
+  this.elements.settingsTabScreenshotsBtn?.addEventListener('click', () => this.switchSettingsTab('screenshots'));
   this.elements.settingsTabDisplayBtn?.addEventListener('click', () => this.switchSettingsTab('display'));
-  this.elements.settingsTabAdvancedBtn?.addEventListener('click', () => this.switchSettingsTab('advanced'));
+  this.elements.settingsTabPermissionsBtn?.addEventListener('click', () => this.switchSettingsTab('permissions'));
   this.elements.settingsOpenAccountBtn?.addEventListener('click', () => this.openAccountPanel?.());
   this.elements.accountBackToSettingsBtn?.addEventListener('click', () => this.openSettingsPanel?.());
   document.getElementById('usageRefreshBtn')?.addEventListener('click', () => this.refreshUsageTab?.());
@@ -82,6 +82,22 @@ export const setupSettingsListeners = function setupSettingsListeners(this: Side
   this.elements.sendScreenshotsAsImages?.addEventListener('change', () => this.updateScreenshotToggleState());
   this.elements.orchestratorToggle?.addEventListener('change', () => this.updatePromptSections?.());
   this.elements.orchestratorProfile?.addEventListener('change', () => this.updatePromptSections?.());
+
+  // Screenshots tab controls — sync to active config
+  const syncScreenshotsConfig = () => {
+    const config = this.configs?.[this.currentConfig];
+    if (!config) return;
+    if (this.elements.enableScreenshots) config.enableScreenshots = this.elements.enableScreenshots.checked;
+    if (this.elements.sendScreenshotsAsImages)
+      config.sendScreenshotsAsImages = this.elements.sendScreenshotsAsImages.checked;
+    if (this.elements.screenshotQuality) config.screenshotQuality = this.elements.screenshotQuality.value;
+    if (this.elements.saveHistory) config.saveHistory = this.elements.saveHistory.checked;
+    void this.persistAllSettings?.({ silent: true });
+  };
+  this.elements.enableScreenshots?.addEventListener('change', syncScreenshotsConfig);
+  this.elements.sendScreenshotsAsImages?.addEventListener('change', syncScreenshotsConfig);
+  this.elements.screenshotQuality?.addEventListener('change', syncScreenshotsConfig);
+  this.elements.saveHistory?.addEventListener('change', syncScreenshotsConfig);
 
   // Visible orchestrator controls sync with hidden ones
   this.elements.orchestratorToggle?.addEventListener('change', () => {
@@ -110,28 +126,6 @@ export const setupSettingsListeners = function setupSettingsListeners(this: Side
       // User cancelled or API unavailable
     }
   });
-
-  // Generation tab — live persistence
-  const genPersist = () => this.updateActiveConfigFromGenerationTab?.();
-  this.elements.genTemperature?.addEventListener('input', () => {
-    if (this.elements.genTemperatureValue)
-      this.elements.genTemperatureValue.textContent = Number(this.elements.genTemperature.value).toFixed(2);
-    genPersist();
-  });
-  for (const id of ['genMaxTokens', 'genContextLimit', 'genTimeout', 'genScreenshotQuality'] as const) {
-    this.elements[id]?.addEventListener('change', genPersist);
-  }
-  for (const id of [
-    'genEnableScreenshots',
-    'genSendScreenshots',
-    'genStreamResponses',
-    'genShowThinking',
-    'genAutoScroll',
-    'genConfirmActions',
-    'genSaveHistory',
-  ] as const) {
-    this.elements[id]?.addEventListener('change', genPersist);
-  }
 
   // Save settings
   this.elements.saveSettingsBtn?.addEventListener('click', () => {

@@ -75,14 +75,13 @@ export const getSidePanelElements = (): SidePanelElements => ({
   // v4 settings tabs
   settingsTabProvidersBtn: byId<HTMLButtonElement>('settingsTabProvidersBtn'),
   settingsTabModelBtn: byId<HTMLButtonElement>('settingsTabModelBtn'),
-  settingsTabGenerationBtn: byId<HTMLButtonElement>('settingsTabGenerationBtn'),
+  settingsTabScreenshotsBtn: byId<HTMLButtonElement>('settingsTabScreenshotsBtn'),
   settingsTabDisplayBtn: byId<HTMLButtonElement>('settingsTabDisplayBtn'),
-  settingsTabAdvancedBtn: byId<HTMLButtonElement>('settingsTabAdvancedBtn'),
+  settingsTabPermissionsBtn: byId<HTMLButtonElement>('settingsTabPermissionsBtn'),
   settingsTabProviders: byId<HTMLElement>('settingsTabProviders'),
   settingsTabModel: byId<HTMLElement>('settingsTabModel'),
-  settingsTabGeneration: byId<HTMLElement>('settingsTabGeneration'),
   settingsTabDisplay: byId<HTMLElement>('settingsTabDisplay'),
-  settingsTabAdvanced: byId<HTMLElement>('settingsTabAdvanced'),
+  settingsTabPermissions: byId<HTMLElement>('settingsTabPermissions'),
   settingsResetProfilesBtn: byId<HTMLButtonElement>('settingsResetProfilesBtn'),
   // Provider card grid and editor
   apiProviderGrid: byId<HTMLElement>('apiProviderGrid'),
@@ -109,21 +108,6 @@ export const getSidePanelElements = (): SidePanelElements => ({
   customProviderCancelBtn: byId<HTMLButtonElement>('customProviderCancelBtn'),
   // Model selector grid
   modelSelectorGrid: byId<HTMLElement>('modelSelectorGrid'),
-  // Generation tab
-  genTemperature: byId<HTMLInputElement>('genTemperature'),
-  genTemperatureValue: byId<HTMLElement>('genTemperatureValue'),
-  genMaxTokens: byId<HTMLInputElement>('genMaxTokens'),
-  genContextLimit: byId<HTMLInputElement>('genContextLimit'),
-  genTimeout: byId<HTMLInputElement>('genTimeout'),
-  genScreenshotQuality: byId<HTMLSelectElement>('genScreenshotQuality'),
-  genEnableScreenshots: byId<HTMLInputElement>('genEnableScreenshots'),
-  genSendScreenshots: byId<HTMLInputElement>('genSendScreenshots'),
-  genStreamResponses: byId<HTMLInputElement>('genStreamResponses'),
-  genShowThinking: byId<HTMLInputElement>('genShowThinking'),
-  genAutoScroll: byId<HTMLInputElement>('genAutoScroll'),
-  genConfirmActions: byId<HTMLInputElement>('genConfirmActions'),
-  genSaveHistory: byId<HTMLInputElement>('genSaveHistory'),
-  genNotifyOnTurnComplete: byId<HTMLInputElement>('genNotifyOnTurnComplete'),
 
   newProfileNameInput: byId<HTMLInputElement>('newProfileNameInput'),
   createProfileBtn: byId<HTMLButtonElement>('createProfileBtn'),
@@ -159,10 +143,12 @@ export const getSidePanelElements = (): SidePanelElements => ({
   applyProfileJsonBtn: byId<HTMLButtonElement>('applyProfileJsonBtn'),
   permissionRead: byId<HTMLInputElement>('permissionRead'),
   permissionInteract: byId<HTMLInputElement>('permissionInteract'),
+  permissionScripting: byId<HTMLInputElement>('permissionScripting'),
   permissionNavigate: byId<HTMLInputElement>('permissionNavigate'),
   permissionTabs: byId<HTMLInputElement>('permissionTabs'),
   permissionScreenshots: byId<HTMLInputElement>('permissionScreenshots'),
   allowedDomains: byId<HTMLTextAreaElement>('allowedDomains'),
+  maxSessionTabs: byId<HTMLInputElement>('maxSessionTabs'),
 
   // Account — Grok connection identity
   accountOnboardingModal: byId<HTMLElement>('accountOnboardingModal'),

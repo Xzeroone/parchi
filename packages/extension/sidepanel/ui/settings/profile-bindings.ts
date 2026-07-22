@@ -17,7 +17,6 @@ export const PROFILE_EDITOR_BOOLEAN_BINDINGS: BooleanBinding[] = [
   { elementKey: 'profileEditorShowThinking', configKey: 'showThinking', defaultTrue: true },
   { elementKey: 'profileEditorStreamResponses', configKey: 'streamResponses', defaultTrue: true },
   { elementKey: 'profileEditorAutoScroll', configKey: 'autoScroll', defaultTrue: true },
-  { elementKey: 'profileEditorConfirmActions', configKey: 'confirmActions', defaultTrue: true },
   { elementKey: 'profileEditorSaveHistory', configKey: 'saveHistory', defaultTrue: true },
 ];
 
@@ -34,7 +33,6 @@ export const SETTINGS_FORM_BOOLEAN_BINDINGS: BooleanBinding[] = [
   { elementKey: 'streamResponses', configKey: 'streamResponses', defaultTrue: true },
   { elementKey: 'showThinking', configKey: 'showThinking', defaultTrue: true },
   { elementKey: 'autoScroll', configKey: 'autoScroll', defaultTrue: true },
-  { elementKey: 'confirmActions', configKey: 'confirmActions', defaultTrue: true },
   { elementKey: 'saveHistory', configKey: 'saveHistory', defaultTrue: true },
 ];
 

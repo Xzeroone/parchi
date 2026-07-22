@@ -5,7 +5,7 @@ export const READ_TOOLS = [
   {
     name: 'waitFor',
     description:
-      'Wait for a selector, text, or JavaScript condition to become true. Prefer selector or text over script on CSP-strict sites (social networks, banking, Google apps) — script conditions may return "csp_blocked" on those hosts. At least one of selector, text, or script is required.',
+      'Wait for a selector, text, or JavaScript condition to become true. Prefer selector or text over script on CSP-strict sites (social networks, banking, Google apps) — script conditions may return "csp_blocked" on those hosts unless userScripts is enabled. At least one of selector, text, or script is required.',
     input_schema: {
       type: 'object',
       properties: {
@@ -21,7 +21,7 @@ export const READ_TOOLS = [
         script: {
           type: 'string',
           description:
-            'JavaScript expression or function body that must evaluate truthy. May fail with "csp_blocked" on strict-CSP pages — use selector or text instead if that happens.',
+            'JavaScript expression or function body that must evaluate truthy. May fail with "csp_blocked" on strict-CSP pages — enable "Allow User Scripts" in chrome://extensions for Parchi to bypass CSP, or use selector or text instead.',
         },
         args: {
           type: 'array',
@@ -30,7 +30,8 @@ export const READ_TOOLS = [
         },
         pollIntervalMs: {
           type: 'number',
-          description: 'Polling interval in milliseconds. Defaults to 250.',
+          description:
+            'Polling interval in milliseconds. Defaults to 250. Values below 50 are clamped to the 50ms minimum.',
         },
         timeoutMs: {
           type: 'number',
@@ -43,7 +44,7 @@ export const READ_TOOLS = [
   {
     name: 'evaluate',
     description:
-      'Execute JavaScript in the page context and return a JSON-serializable result. May fail with "csp_blocked" on strict-CSP sites (social networks, banking, Google apps) — if that happens, use getContent, waitFor(selector|text), findHtml, or screenshot instead. Do NOT retry evaluate after a csp_blocked error on the same page.',
+      'Execute JavaScript in the page context and return a JSON-serializable result. May fail with "csp_blocked" on strict-CSP sites (social networks, banking, Google apps) — enable "Allow User Scripts" in chrome://extensions for Parchi to bypass CSP. If userScripts is unavailable, use getContent, waitFor(selector|text), findHtml, or screenshot instead. Do NOT retry evaluate after a csp_blocked error on the same page.',
     input_schema: {
       type: 'object',
       properties: {

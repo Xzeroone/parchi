@@ -7,7 +7,6 @@ import {
   resolveWaitTimeoutMs,
 } from './browser-tool-shared.js';
 import { injectedClick } from './injected/click.js';
-import { dispatchSyntheticClick, resolveSelectorSpecElement } from './injected/shared.js';
 import { parseSelectorSpec } from './selector-spec.js';
 
 export async function clickTool(ctx: BrowserToolsDelegate, args: BrowserToolArgs) {
@@ -31,19 +30,9 @@ export async function clickTool(ctx: BrowserToolsDelegate, args: BrowserToolArgs
 
   const spec = parseSelectorSpec(rawSelector);
 
-  let result = await ctx.runInTab(tabId, injectedClick, [
-    spec,
-    timeoutMs,
-    dispatchSyntheticClick,
-    resolveSelectorSpecElement,
-  ] as const);
-  if (isToolFailure(result) && result.error === 'Element not found.') {
-    result = await ctx.runInAllFrames(tabId, injectedClick, [
-      spec,
-      timeoutMs,
-      dispatchSyntheticClick,
-      resolveSelectorSpecElement,
-    ] as const);
+  let result = await ctx.runInTab(tabId, injectedClick, [spec, timeoutMs] as const);
+  if (isToolFailure(result) && result.error === 'Element not found.' && args.searchFrames === true) {
+    result = await ctx.runInAllFrames(tabId, injectedClick, [spec, timeoutMs] as const);
   }
 
   if (timeout.wasClamped && result && typeof result === 'object') {

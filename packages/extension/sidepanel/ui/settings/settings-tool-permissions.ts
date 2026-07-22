@@ -9,6 +9,7 @@ sidePanelProto.collectToolPermissions = function collectToolPermissions() {
     navigate: true,
     tabs: true,
     screenshots: true,
+    scripting: true,
   };
   return {
     read: this.elements.permissionRead ? this.elements.permissionRead.checked !== false : fallback.read !== false,
@@ -22,6 +23,9 @@ sidePanelProto.collectToolPermissions = function collectToolPermissions() {
     screenshots: this.elements.permissionScreenshots
       ? this.elements.permissionScreenshots.checked !== false
       : fallback.screenshots !== false,
+    scripting: this.elements.permissionScripting
+      ? this.elements.permissionScripting.checked !== false
+      : fallback.scripting !== false,
   };
 };
 
@@ -31,7 +35,7 @@ sidePanelProto.updateScreenshotToggleState = function updateScreenshotToggleStat
   const visionProfile = this.elements.visionProfile?.value;
   const provider = activeProfile.provider;
   const hasVision = Boolean(provider) || visionProfile;
-  const controls: Array<any> = [];
+  const controls: Array<any> = [this.elements.sendScreenshotsAsImages, this.elements.screenshotQuality];
   controls.forEach((ctrl) => {
     if (!ctrl) return;
     ctrl.disabled = !wantsScreens;

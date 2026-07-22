@@ -36,7 +36,7 @@ export async function handleOrchestratorBuiltin(
     };
   }
 
-  if (toolName === 'await_subagent' || toolName === 'await_agents') {
+  if (toolName === 'await_subagent') {
     const awaited = await awaitSubagents(sessionState, args);
     if (!awaited.success || !sessionState.orchestratorPlan) {
       return { handled: true, result: awaited };

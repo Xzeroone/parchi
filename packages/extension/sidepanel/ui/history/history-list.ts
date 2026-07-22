@@ -29,7 +29,8 @@ sidePanelProto.loadHistoryList = async function loadHistoryList() {
   const container = resolveHistoryContainer(this);
   if (!container) return;
 
-  const saveEnabled = this.elements.saveHistory?.value !== 'false';
+  const config = this.configs?.[this.currentConfig] || {};
+  const saveEnabled = config.saveHistory !== false;
   if (!saveEnabled) {
     container.innerHTML =
       '<div class="history-empty">History is off. Enable "Save History" in Settings to see past chats.</div>';

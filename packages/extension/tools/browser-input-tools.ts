@@ -6,7 +6,6 @@ import {
   missingSessionTabError,
   resolveWaitTimeoutMs,
 } from './browser-tool-shared.js';
-import { resolveSelectorSpecElement } from './injected/shared.js';
 import { injectedType } from './injected/type.js';
 import { parseSelectorSpec } from './selector-spec.js';
 
@@ -29,14 +28,9 @@ export async function typeTool(ctx: BrowserToolsDelegate, args: BrowserToolArgs)
   });
 
   const spec = selector ? parseSelectorSpec(selector) : null;
-  let result = await ctx.runInTab(tabId, injectedType, [spec, text, timeoutMs, resolveSelectorSpecElement] as const);
-  if (isToolFailure(result) && result.error === 'Element not found.') {
-    result = await ctx.runInAllFrames(tabId, injectedType, [
-      spec,
-      text,
-      timeoutMs,
-      resolveSelectorSpecElement,
-    ] as const);
+  let result = await ctx.runInTab(tabId, injectedType, [spec, text, timeoutMs] as const);
+  if (isToolFailure(result) && result.error === 'Element not found.' && args.searchFrames === true) {
+    result = await ctx.runInAllFrames(tabId, injectedType, [spec, text, timeoutMs] as const);
   }
 
   if (timeout.wasClamped && result && typeof result === 'object') {

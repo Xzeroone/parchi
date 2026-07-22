@@ -55,7 +55,8 @@ sidePanelProto.displayAssistantMessage = function displayAssistantMessage(
     }
   }
 
-  const showThinking = this.elements.showThinking?.value === 'true';
+  const config = this.configs?.[this.currentConfig] || {};
+  const showThinking = config.showThinking !== false;
 
   if (streamedContainer) {
     renderStreamedContainer(this, streamedContainer, streamEventsEl, {

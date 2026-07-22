@@ -1,4 +1,5 @@
 import { hydrateSettingsStore } from '../../../state/stores/settings-store.js';
+import { DEFAULT_MAX_SESSION_TABS, normalizeMaxSessionTabs } from '../../../tools/browser-tool-shared.js';
 import { SidePanelUI } from '../core/panel-ui.js';
 import { syncOAuthProfiles } from './oauth-profiles.js';
 import { DEFAULT_THEME_ID } from './themes.js';
@@ -31,7 +32,6 @@ sidePanelProto.loadSettings = async function loadSettings() {
     showThinking: true,
     streamResponses: true,
     autoScroll: true,
-    confirmActions: true,
     saveHistory: true,
     enableScreenshots: true,
   };
@@ -88,8 +88,11 @@ sidePanelProto.loadSettings = async function loadSettings() {
   if (this.elements.showThinking) this.elements.showThinking.checked = settings.showThinking !== false;
   if (this.elements.streamResponses) this.elements.streamResponses.checked = settings.streamResponses !== false;
   if (this.elements.autoScroll) this.elements.autoScroll.checked = settings.autoScroll !== false;
-  if (this.elements.confirmActions) this.elements.confirmActions.checked = settings.confirmActions !== false;
   if (this.elements.saveHistory) this.elements.saveHistory.checked = settings.saveHistory !== false;
+  if (this.elements.enableScreenshots) this.elements.enableScreenshots.checked = settings.enableScreenshots !== false;
+  if (this.elements.sendScreenshotsAsImages)
+    this.elements.sendScreenshotsAsImages.checked = settings.sendScreenshotsAsImages === true;
+  if (this.elements.screenshotQuality) this.elements.screenshotQuality.value = settings.screenshotQuality || 'high';
   if (this.elements.autoSaveSession)
     this.elements.autoSaveSession.value =
       settings.autoSaveSession !== undefined ? String(settings.autoSaveSession) : 'false';
@@ -105,6 +108,7 @@ sidePanelProto.loadSettings = async function loadSettings() {
     navigate: true,
     tabs: true,
     screenshots: true,
+    scripting: true,
   };
   const toolPermissions = {
     ...defaultPermissions,
@@ -113,20 +117,24 @@ sidePanelProto.loadSettings = async function loadSettings() {
   this.toolPermissions = toolPermissions;
   if (this.elements.permissionRead) this.elements.permissionRead.checked = toolPermissions.read !== false;
   if (this.elements.permissionInteract) this.elements.permissionInteract.checked = toolPermissions.interact !== false;
+  if (this.elements.permissionScripting)
+    this.elements.permissionScripting.checked = toolPermissions.scripting !== false;
   if (this.elements.permissionNavigate) this.elements.permissionNavigate.checked = toolPermissions.navigate !== false;
   if (this.elements.permissionTabs) this.elements.permissionTabs.checked = toolPermissions.tabs !== false;
   if (this.elements.permissionScreenshots)
     this.elements.permissionScreenshots.checked = toolPermissions.screenshots !== false;
   if (this.elements.allowedDomains) this.elements.allowedDomains.value = settings.allowedDomains || '';
+  if (this.elements.maxSessionTabs) {
+    this.elements.maxSessionTabs.value = String(
+      normalizeMaxSessionTabs(settings.maxSessionTabs, DEFAULT_MAX_SESSION_TABS),
+    );
+  }
 
   await syncOAuthProfiles(this).catch(() => {});
 
   this.refreshConfigDropdown();
   this.setActiveConfig(this.currentConfig, true);
   this.updateScreenshotToggleState();
-  this.populateGenerationTab?.();
-  this.updatePromptSections?.();
-  this.renderTeamProfileList?.();
   await this.refreshAccountPanel?.({ silent: true });
   this.syncAccountAvatar?.();
 };

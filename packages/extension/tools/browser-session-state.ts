@@ -1,15 +1,19 @@
 import { getActiveTab } from '../utils/active-tab.js';
 import {
+  DEFAULT_MAX_SESSION_TABS,
   DEFAULT_SESSION_GROUP,
   type GroupOptions,
-  MAX_SESSION_TABS,
   type SessionTabSummary,
 } from './browser-tool-shared.js';
 
-export function getGroupTitle(sessionTabs: Map<number, SessionTabSummary>, options: GroupOptions): string {
+export function getGroupTitle(
+  sessionTabs: Map<number, SessionTabSummary>,
+  options: GroupOptions,
+  maxSessionTabs: number = DEFAULT_MAX_SESSION_TABS,
+): string {
   const base = options.title || DEFAULT_SESSION_GROUP.title;
   const count = sessionTabs.size;
-  return count > 0 ? `${base} · ${count}/${MAX_SESSION_TABS}` : base;
+  return count > 0 ? `${base} · ${count}/${maxSessionTabs}` : base;
 }
 
 export async function configureSessionTabsState(
@@ -18,14 +22,12 @@ export async function configureSessionTabsState(
   options: GroupOptions,
   toSessionTabSummary: (tab: chrome.tabs.Tab | null | undefined) => SessionTabSummary | null,
   setCurrentSessionTabId: (tabId: number | null) => void,
-  setSessionTabGroupId: (groupId: number | null) => void,
   supportsTabGroups: boolean,
   ensureSessionTabGroup: (options?: GroupOptions) => Promise<void>,
 ) {
-  sessionTabs.clear();
-  setCurrentSessionTabId(null);
-  setSessionTabGroupId(null);
-
+  // Merge incoming tabs into the existing session set.
+  // Grouped tabs remain permanent members until explicitly removed via closeTab.
+  // Do NOT clear sessionTabs — that would drop grouped tabs on focus change.
   let nextActiveTabId: number | null = null;
   for (const candidate of tabs) {
     if (typeof candidate?.id !== 'number') continue;
@@ -39,6 +41,19 @@ export async function configureSessionTabsState(
       }
     } catch {
       // Ignore stale IDs from sidepanel state; only keep live browser tabs.
+    }
+  }
+
+  // Prune session tabs that no longer exist in Chrome (closed externally).
+  // Tabs closed via closeTabTool are already removed from sessionTabs.
+  for (const tabId of sessionTabs.keys()) {
+    try {
+      await chrome.tabs.get(tabId);
+    } catch {
+      sessionTabs.delete(tabId);
+      if (nextActiveTabId === tabId) {
+        nextActiveTabId = null;
+      }
     }
   }
 
@@ -58,12 +73,13 @@ export async function ensureSessionTabGroupState(
   sessionTabGroupId: number | null,
   setSessionTabGroupId: (groupId: number | null) => void,
   options: GroupOptions = DEFAULT_SESSION_GROUP,
+  maxSessionTabs: number = DEFAULT_MAX_SESSION_TABS,
 ) {
   if (!supportsTabGroups) return;
   const sessionTabIds = Array.from(sessionTabs.keys());
   if (sessionTabIds.length === 0) return;
 
-  const title = getGroupTitle(sessionTabs, options);
+  const title = getGroupTitle(sessionTabs, options, maxSessionTabs);
   const color = options.color || DEFAULT_SESSION_GROUP.color;
 
   try {
@@ -92,11 +108,12 @@ export async function updateGroupTitleState(
   supportsTabGroups: boolean,
   sessionTabGroupId: number | null,
   sessionTabs: Map<number, SessionTabSummary>,
+  maxSessionTabs: number = DEFAULT_MAX_SESSION_TABS,
 ) {
   if (!supportsTabGroups || sessionTabGroupId === null) return;
   try {
     await chrome.tabGroups.update(sessionTabGroupId, {
-      title: getGroupTitle(sessionTabs, DEFAULT_SESSION_GROUP),
+      title: getGroupTitle(sessionTabs, DEFAULT_SESSION_GROUP, maxSessionTabs),
     });
   } catch {}
 }

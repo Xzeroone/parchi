@@ -11,6 +11,7 @@ import {
   missingSessionTabError,
   resolveWaitTimeoutMs,
 } from './browser-tool-shared.js';
+import { buildWaitForScriptUserScript } from './browser-user-scripts.js';
 
 export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolArgs) {
   const tabId = await ctx.resolveTabId(args);
@@ -48,6 +49,27 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
     durationMs: Math.min(timeoutMs, 1500),
   });
 
+  // For pure-script waits (no selector/text), try userScripts path first
+  if (script && !selector && !expectedText) {
+    const code = buildWaitForScriptUserScript(script, scriptArgs, timeoutMs, pollIntervalMs);
+    const usResult = await ctx.runUserScript<{
+      success: boolean;
+      error?: string;
+      code?: string;
+      matchedScript?: boolean;
+      elapsedMs?: number;
+      attempts?: number;
+    }>(tabId, code);
+    if (usResult.success && usResult.result) {
+      return usResult.result;
+    }
+    // Script-level error — return it directly
+    if (!usResult.success && usResult.code === 'script_error') {
+      return usResult;
+    }
+    // API-level failure — fall through to executeScript
+  }
+
   const result = await ctx.runInTab(
     tabId,
     // chrome.scripting.executeScript serializes `func` via Function.prototype.toString()
@@ -78,7 +100,7 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
             success: false,
             error: error instanceof Error ? error.message : String(error),
             code: 'csp_blocked',
-            hint: 'Script condition blocked by page CSP. Use selector or text instead.',
+            hint: 'Script condition blocked by page CSP. Enable "Allow User Scripts" in chrome://extensions for Parchi to bypass CSP, or use selector or text instead.',
           };
         }
       }
@@ -104,7 +126,8 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
         // must not require a DOM (and unit tests exercise that path in Node).
         if (text) {
           const textScope = element ?? document.body;
-          if (!(textScope?.textContent || '').includes(text)) {
+          const scopeText = (textScope?.textContent || '').toLowerCase();
+          if (!scopeText.includes(text.toLowerCase())) {
             return { done: false };
           }
         }
@@ -117,7 +140,7 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
                 success: false,
                 error: 'Script execution blocked.',
                 code: 'csp_blocked',
-                hint: 'Script condition blocked by page CSP. Use selector or text instead.',
+                hint: 'Script condition blocked by page CSP. Enable "Allow User Scripts" in chrome://extensions for Parchi to bypass CSP, or use selector or text instead.',
               },
             };
           }
@@ -132,7 +155,7 @@ export async function waitForTool(ctx: BrowserToolsDelegate, args: BrowserToolAr
                 success: false,
                 error: error instanceof Error ? error.message : String(error),
                 code: 'csp_blocked',
-                hint: 'Script condition blocked by page CSP. Use selector or text instead.',
+                hint: 'Script condition blocked by page CSP. Enable "Allow User Scripts" in chrome://extensions for Parchi to bypass CSP, or use selector or text instead.',
               },
             };
           }

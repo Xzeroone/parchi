@@ -48,6 +48,8 @@ export async function runToolPermissionsAndReportImagesSuite(runner: AsyncTestRu
   await runner.test('tool permission categories and parsing stay aligned', async () => {
     runner.assertEqual(getToolPermissionCategory('clickAt'), 'interact');
     runner.assertEqual(getToolPermissionCategory('getContent'), 'read');
+    runner.assertEqual(getToolPermissionCategory('evaluate'), 'scripting');
+    runner.assertEqual(getToolPermissionCategory('waitFor'), 'read');
     runner.assertEqual(getToolPermissionCategory('unknownTool'), null);
     runner.assertEqual(parseAllowedDomains('example.com, docs.example.com\nfoo.com'), [
       'example.com',
@@ -70,6 +72,55 @@ export async function runToolPermissionsAndReportImagesSuite(runner: AsyncTestRu
     runner.assertFalse(result.allowed);
     runner.assertIncludes(result.reason || '', 'Permission blocked: interact');
     runner.assertEqual(result.policy?.type, 'permission');
+  });
+
+  await runner.test('scripting permission gates evaluate and waitFor(script)', async () => {
+    const getTools = () => ({ getCurrentSessionTabId: () => 7 }) as any;
+    const blockedEvaluate = await checkToolPermission(
+      'evaluate',
+      { script: '1+1' },
+      { toolPermissions: { scripting: false }, allowedDomains: '' },
+      null,
+      undefined,
+      null,
+      getTools,
+    );
+    runner.assertFalse(blockedEvaluate.allowed);
+    runner.assertIncludes(blockedEvaluate.reason || '', 'Permission blocked: scripting');
+
+    const blockedWaitScript = await checkToolPermission(
+      'waitFor',
+      { script: 'document.body' },
+      { toolPermissions: { read: true, scripting: false }, allowedDomains: '' },
+      null,
+      undefined,
+      null,
+      getTools,
+    );
+    runner.assertFalse(blockedWaitScript.allowed);
+    runner.assertIncludes(blockedWaitScript.reason || '', 'Permission blocked: scripting');
+
+    const allowedWaitSelector = await checkToolPermission(
+      'waitFor',
+      { selector: '#ready' },
+      { toolPermissions: { read: true, scripting: false }, allowedDomains: '' },
+      null,
+      undefined,
+      null,
+      getTools,
+    );
+    runner.assertTrue(allowedWaitSelector.allowed, 'waitFor(selector) should not require scripting');
+
+    const allowedEvaluate = await checkToolPermission(
+      'evaluate',
+      { script: '1+1' },
+      { toolPermissions: { scripting: true, interact: false }, allowedDomains: '' },
+      null,
+      undefined,
+      null,
+      getTools,
+    );
+    runner.assertTrue(allowedEvaluate.allowed, 'evaluate uses scripting, not interact');
   });
 
   await runner.test('tool permissions allow unset policies and reject malformed URLs', async () => {
